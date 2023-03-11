@@ -1,0 +1,28 @@
+{
+    "name": "NotFluffy.NoFluffDI.Tests",
+    "rootNamespace": "NotFluffy.NoFluffDI.Tests",
+    "references": [
+        "UnityEditor.TestRunner",
+        "NotFluffy.NoFluffDI",
+        "NotFluffy.NoFluffRx",
+        "NotFluffy.NoFluffRx.Unity",
+        "NotFluffy"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "FluentAssertions.dll",
+        "System.Reactive.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,19 @@
+{
+    "name": "NotFluffy.NoFluffDI.Benchmark",
+    "rootNamespace": "NotFluffy.NoFluffDI.Benchmark",
+    "references": [
+        "GUID:b83fa2c9a1c9b78468588c16e6fad878",
+        "GUID:9f32b9a13565b3a48a167d8473e1b3cc",
+        "GUID:8df6fa67b614b4a45acf1542effd0806",
+        "GUID:480493308c4d5524cab34001709058d6"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

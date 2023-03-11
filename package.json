@@ -1,0 +1,15 @@
+{
+  "name": "notfluffy.nofluffdi",
+  "author": "NotFluffy",
+  "displayName": "NoFluffDI",
+  "version": "1.0.0",
+  "unity": "2021.3",
+  "description": "A \"Pure DI\", no reflection dependency injection (technically only resolution) framework for Unity",
+  "keywords": [
+    "Zenject",
+    "Dependency Injection",
+    "IoC",
+    "DI",
+    "DI Container"
+  ]
+}

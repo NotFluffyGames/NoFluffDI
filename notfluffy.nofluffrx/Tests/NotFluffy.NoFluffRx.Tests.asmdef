@@ -1,0 +1,25 @@
+{
+    "name": "NotFluffy.NoFluffRx.Tests",
+    "rootNamespace": "NotFluffy.NoFluffRx.Tests",
+    "references": [
+        "GUID:9f32b9a13565b3a48a167d8473e1b3cc",
+        "GUID:8df6fa67b614b4a45acf1542effd0806",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:c0dd0d10738d4ad4a9de57c559d0ca1b"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+        ""
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

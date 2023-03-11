@@ -1,0 +1,16 @@
+{
+    "name": "NotFluffy.NoFluffRx.Unity",
+    "rootNamespace": "NotFluffy.NoFluffRx.Unity",
+    "references": [
+        "GUID:8df6fa67b614b4a45acf1542effd0806"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

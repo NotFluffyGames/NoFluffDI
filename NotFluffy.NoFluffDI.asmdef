@@ -1,0 +1,17 @@
+{
+    "name": "NotFluffy.NoFluffDI",
+    "rootNamespace": "NotFluffy.NoFluffDI",
+    "references": [
+        "GUID:9f32b9a13565b3a48a167d8473e1b3cc",
+        "GUID:8df6fa67b614b4a45acf1542effd0806"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
