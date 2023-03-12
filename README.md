@@ -19,6 +19,9 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
+      </li>
+      <li>
+      <a href="#cons-of-using-my-approach">Cons Of Using My Approach</a>
     </li>
     <li>
       <a href="#getting-started">Getting Started</a>
@@ -41,9 +44,9 @@ NoFluffDI was created after hearing about and experiencing performance loss when
 
 My first inspirations were reading about the term <a href="https://blog.ploeh.dk/2014/06/10/pure-di/">Pure-DI</a> and <a href="https://github.com/gustavopsantos/Reflex">Reflex</a>, another DI framework which also prioritized performance improvements and inspired many of my designs and after using it a bit I was convienced simpler more performant frameworks then Zenject can be created.
 
-The main design pillar of NoFluffDI, differentiating it from the other frameworks is not using reflection at all.
+The main design pillar of NoFluffDI, differentiating it from the other frameworks is <b>not using reflection</b> at all.
 
-This allowed me to kill 3 birds with 1 stone:
+<b>This allowed me to kill 3 birds with 1 stone:</b>
 
 ### - Gain performance boost
 Reflection is known to be slow in general and in order to automatically inject dependencies in the scene, it's required to iterate and reflect on every component in the scene after every scene load, whether it has dependencies requiring injection or not.
@@ -57,6 +60,12 @@ Removing reflection means all types are still refrenced in the compiler, you can
 
 ### - More stable and easier to maintain
 Reflection is also <a href="https://github.com/dotnet/runtime/blob/main/src/coreclr/nativeaot/docs/reflection-in-aot-mode.md">not very friendly with AOT compilation</a> (unlike Unity's most popular scripting backend - <a href=https://docs.unity3d.com/Manual/ScriptingRestrictions.html>IL2CPP</a>) or code stripping (also <a href=https://docs.unity3d.com/Manual/ManagedCodeStripping.html>very popular in Unity</a>), requiring you to follow and understand the risks of using a DI frameworks, making it riskier and more complex to use then it should be.
+
+<!-- CONS OF USING MY APPROACH -->
+## Cons of using my approach
+- Not using reflection means losing many very convinient features like constructor injection, one of the most common type of injection. instead you have to manually create and install Factory resolvers.
+
+- Reverting the flow of dependency resolution (meaning you need to find your matching container and not the other way around) is many times frowned upon (also called the InversionOfControl or <a href="https://softwareengineering.stackexchange.com/questions/305285/dependency-inversion-principle-and-hollywood-analogy">"The HollyWood Principle"</a>) and while I still plan to add optional support for the more common injection flow, I plan to keep developing the system in the inversed way.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
