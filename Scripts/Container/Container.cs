@@ -7,62 +7,24 @@ using NotFluffy.NoFluffRx;
 
 namespace NotFluffy.NoFluffDI
 {
-    public class ContainerBuilder : IContainerBuilder
+    public class ContainerBuilder : BaseContainerBuilder
     {
-        private List<IResolverFactory> resolvers;
-        private Dictionary<Type, ConverterBind> implicitConverters;
-        private event Action<IReadOnlyContainer> BuildCallback;
-        private object Context { get; }
-        private IReadOnlyContainer Parent { get; }
-
-        public ContainerBuilder(object context = null, IReadOnlyContainer parent = null)
+        public ContainerBuilder(object context = null, IReadOnlyContainer parent = null) 
+            : base(context, parent)
         {
-            Parent = parent;
-            Context = context;
         }
 
-        public IContainerBuilder Add(IResolverFactory resolverFactory)
+        protected override IReadOnlyContainer Create()
         {
-            resolvers ??= new List<IResolverFactory>();
-            resolvers.Add(resolverFactory);
-            return this;
+            return new Container(
+                Context,
+                resolvers,
+                implicitConverters,
+                Parent);
         }
-
-        public IContainerBuilder SetImplicitConverter<TFrom, TTo>(Converter<TFrom, TTo> converter)
+        
+        private class Container : IReadOnlyContainer, IReactiveDisposable
         {
-            var converterBind = new ConverterBind(typeof(TFrom), ConvertInternal);
-            implicitConverters ??= new Dictionary<Type, ConverterBind>();
-            implicitConverters.Add(typeof(TTo), converterBind);
-
-            object ConvertInternal(object from) => converter((TFrom)from);
-            return this;
-        }
-
-        public IReadOnlyContainer Build()
-        {
-            var container 
-                = new Container(
-                    Context,
-                    resolvers,
-                    implicitConverters,
-                    Parent);
-            
-            BuildCallback?.Invoke(container);
-            BuildCallback = null;
-            
-            return container;
-        }
-
-        public void RegisterBuildCallback(Action<IReadOnlyContainer> callback)
-        {
-            BuildCallback += callback;
-        }
-
-        private class Container : IReadOnlyContainer
-        {
-            // private readonly List<IReadOnlyContainer> children = new();
-            // public IReadOnlyList<IReadOnlyContainer> Children => children;
-
             public IReadOnlyContainer Parent { get; private set; }
 
             public object Context { get; }
@@ -101,7 +63,6 @@ namespace NotFluffy.NoFluffDI
                 Parent = null;
                 onDispose.OnNext(new Unit());
             }
-            
 
             public IContainerBuilder Scope(object context)
             {
@@ -163,12 +124,8 @@ namespace NotFluffy.NoFluffDI
             }
 
             public object Resolve(Type contract, object id = null)
-                => Resolve(new ResolverID(contract, id));
-
-            private object Resolve(ResolverID resolverID)
             {
-                var contract = resolverID.Type;
-                var id = resolverID.Id;
+                var resolverID = new ResolverID(contract, id);
                 //Try resolve using a direct resolver
                 var ctx = GetResolver(resolverID);
 
@@ -198,7 +155,8 @@ namespace NotFluffy.NoFluffDI
 
             private IEnumerable<ConverterBind> GetAllPossibleConverters(Type to)
             {
-                return SelfAndParents().SelectWhile<IReadOnlyContainer, ConverterBind>(TryGetConverter);
+                return SelfAndParents()
+                    .SelectWhile<IReadOnlyContainer, ConverterBind>(TryGetConverter);
 
                 bool TryGetConverter(IReadOnlyContainer node, out ConverterBind c)
                 {
