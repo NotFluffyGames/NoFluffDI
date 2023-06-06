@@ -61,6 +61,8 @@ Removing reflection means all types are still refrenced in the compiler, you can
 ### - More stable and easier to maintain
 Reflection is also <a href="https://github.com/dotnet/runtime/blob/main/src/coreclr/nativeaot/docs/reflection-in-aot-mode.md">not very friendly with AOT compilation</a> (unlike Unity's most popular scripting backend - <a href=https://docs.unity3d.com/Manual/ScriptingRestrictions.html>IL2CPP</a>) or code stripping (also <a href=https://docs.unity3d.com/Manual/ManagedCodeStripping.html>very popular in Unity</a>), requiring you to follow and understand the risks of using a DI frameworks, making it riskier and more complex to use then it should be.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 <!-- CONS OF USING MY APPROACH -->
 ## Cons of using my approach
 - Not using reflection means losing many very convinient features like constructor injection, one of the most common type of injection. instead you have to manually create and install Factory resolvers.
