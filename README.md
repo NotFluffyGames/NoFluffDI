@@ -9,7 +9,7 @@
 
 <h3 align="center">NoFluffDI</h3>
   <p align="center">
-    A no reflection dependency injection (technically only resolution) framework for Unity
+    A no reflection dependency injection (technically only resolution) framework, mostly for Unity
   </p>
 </div>
 
