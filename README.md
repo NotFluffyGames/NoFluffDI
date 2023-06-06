@@ -5,8 +5,6 @@
 <br />
 <div align="center">
 
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
 <h3 align="center">NoFluffDI</h3>
   <p align="center">
     A no reflection dependency injection (technically only resolution) framework, mostly for Unity
@@ -101,7 +99,11 @@ Todo
 <!-- CONTACT -->
 ## Contact
 
-Alon.Talmi @ Alon.Talmi@gmail.com
+Alon Talmi 
+
+Alon.Talmi@gmail.com
+
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
