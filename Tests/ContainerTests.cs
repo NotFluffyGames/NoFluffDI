@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine.TestTools;
@@ -59,15 +58,13 @@ namespace NotFluffy.NoFluffDI.Tests
 
         private static IEnumerable<IReadOnlyContainer> GetContainersForResolve(object id = null)
         {
-            IReadOnlyContainer parent;
-
             //FromInstance
             yield return Resolve
                 .FromInstance(ContainerTestsConsts.CORRECT_INPUT)
                 .WithID(id)
                 .CreateContainer("direct");
 
-            parent = Resolve
+            var parent = Resolve
                 .FromInstance(ContainerTestsConsts.CORRECT_INPUT)
                 .WithID(id)
                 .CreateContainer("parentWithCorrectInstances");
@@ -95,12 +92,12 @@ namespace NotFluffy.NoFluffDI.Tests
 
             //FromMethod
             yield return Resolve
-                .FromMethod(async () => ContainerTestsConsts.CORRECT_INPUT)
+                .FromMethod<string>(() => new(ContainerTestsConsts.CORRECT_INPUT))
                 .WithID(id)
                 .CreateContainer("direct");
 
             parent = Resolve
-                .FromMethod(async () => ContainerTestsConsts.CORRECT_INPUT)
+                .FromMethod<string>(() => new(ContainerTestsConsts.CORRECT_INPUT))
                 .WithID(id)
                 .CreateContainer("parentWithCorrectInstances");
 
@@ -108,17 +105,17 @@ namespace NotFluffy.NoFluffDI.Tests
 
             parent = new ContainerBuilder("parent").Build();
             yield return Resolve
-                .FromMethod(async () => ContainerTestsConsts.CORRECT_INPUT)
+                .FromMethod<string>(() => new(ContainerTestsConsts.CORRECT_INPUT))
                 .WithID(id)
                 .CreateContainer("childWithInstances", parent);
 
             parent = Resolve
-                .FromMethod(async () => ContainerTestsConsts.WRONG_INPUT)
+                .FromMethod<string>(() => new(ContainerTestsConsts.WRONG_INPUT))
                 .WithID(id)
                 .CreateContainer("parentWithWrongInstances");
 
             yield return Resolve
-                .FromMethod(async () => ContainerTestsConsts.CORRECT_INPUT)
+                .FromMethod<string>(() => new(ContainerTestsConsts.CORRECT_INPUT))
                 .WithID(id)
                 .CreateContainer("childOfParentWithWrongInstances", parent);
         }
@@ -241,7 +238,7 @@ namespace NotFluffy.NoFluffDI.Tests
         public IEnumerator Resolve_FromMethod_ShouldExecuteMethod()
         {
             var container = Resolve
-                .FromMethod(async () => new TypeWithState { State = ContainerTestsConsts.CORRECT_INPUT })
+                .FromMethod<TypeWithState>(() => new(new TypeWithState { State = ContainerTestsConsts.CORRECT_INPUT }))
                 .CreateContainer("container");
 
             TypeWithState result = default;

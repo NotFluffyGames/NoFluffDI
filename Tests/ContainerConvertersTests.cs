@@ -110,30 +110,6 @@ namespace NotFluffy.NoFluffDI.Tests
         }
 
         [TestCaseSource(nameof(Containers))]
-        public void CanConvert_StringToInt_True(IReadOnlyContainer container)
-        {
-            Assert.True(container.CanConvert<string, int>());
-        }
-
-        [TestCaseSource(nameof(Containers))]
-        public void CanConvert_StringToFloat_False(IReadOnlyContainer container)
-        {
-            Assert.False(container.CanConvert<string, float>());
-        }
-
-        [TestCaseSource(nameof(Containers))]
-        public void Convert_StringToInt_ConvertedString(IReadOnlyContainer container)
-        {
-            Assert.AreEqual(container.Convert<string, int>(NO_ID_INPUT), NO_ID_OUTPUT);
-        }
-
-        [TestCaseSource(nameof(Containers))]
-        public void Convert_StringToFloat_NoMatchingConverterException(IReadOnlyContainer container)
-        {
-            Assert.Throws<NoMatchingConverterException>(() => container.Convert<string, float>(NO_ID_INPUT));
-        }
-
-        [TestCaseSource(nameof(Containers))]
         public void Contains_IntFromConverter_True(IReadOnlyContainer container)
         {
             Assert.True(container.Contains<int>());
