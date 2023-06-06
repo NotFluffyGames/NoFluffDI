@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System.Collections;
-using System.Linq;
+using System.Collections; 
 
 namespace NotFluffy.NoFluffDI
 {
@@ -29,7 +28,10 @@ namespace NotFluffy.NoFluffDI
         
         IEnumerator IEnumerable.GetEnumerator() => Installers.GetEnumerator();
 
-        public IEnumerable<IResolverFactory> GetBindings(IReadOnlyContainer container)
-            => Installers.SelectMany(i => i.GetBindings(container));
+        public void InstallBindings(IContainerBuilder builder)
+        {
+            foreach (var installer in Installers) 
+                installer.InstallBindings(builder);
+        }
     }
 }

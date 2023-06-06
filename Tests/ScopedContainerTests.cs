@@ -9,64 +9,68 @@ namespace NotFluffy.NoFluffDI.Tests
         [Test]
         public void Resolve_OverrideParentInstallInChildAndResolveChild_ResolveChildValue()
         {
-            using var parent = new Container("parent");
-            parent.InstallSingle(Resolve.FromInstance(ContainerTestsConsts.WRONG_INPUT));
+            IContainerBuilder builder = new ContainerBuilder("parent");
+            builder.Add(Resolve.FromInstance(ContainerTestsConsts.WRONG_INPUT));
+            
+            var parent = builder.Build();
 
-            using var child = parent.Scope("child");
-            child.InstallSingle(Resolve.FromInstance(ContainerTestsConsts.CORRECT_INPUT));
+            builder = parent.Scope("child");
+            builder.Add(Resolve.FromInstance(ContainerTestsConsts.CORRECT_INPUT));
+            
+            var child = builder.Build();
             Assert.AreEqual(child.Resolve<string>(), ContainerTestsConsts.CORRECT_INPUT);
         }
 
         [Test]
         public void Resolve_OverrideParentInstallInChildAndResolveParent_ResolveParentValue()
         {
-            using var parent = new Container("parent");
-            parent.InstallSingle(Resolve.FromInstance(ContainerTestsConsts.CORRECT_INPUT));
+            IContainerBuilder builder = new ContainerBuilder();
 
-            using var child = parent.Scope("child");
-            child.InstallSingle(Resolve.FromInstance(ContainerTestsConsts.WRONG_INPUT));
-            
+            var parent = Resolve.FromInstance(ContainerTestsConsts.CORRECT_INPUT).CreateContainer("parent");
+
+            var unused = Resolve.FromInstance(ContainerTestsConsts.WRONG_INPUT).CreateContainer("child", parent);
+
             Assert.AreEqual(parent.Resolve<string>(), ContainerTestsConsts.CORRECT_INPUT);
         }
 
-        [Test]
-        public void Resolve_ResolveFromChildWhoWasCreatedBeforeBindWasInstalledInParent_ResolveParentValue()
-        {
-            using var parent = new Container("parent");
+        // [Test]
+        // public void Resolve_ResolveFromChildWhoWasCreatedBeforeBindWasInstalledInParent_ResolveParentValue()
+        // {
+        //     var parent = new Container("parent");
+        //
+        //     using var child = parent.Scope("child");
+        //     
+        //     //Install a new binding AFTER the child container was created
+        //     parent.InstallSingle(Resolve.FromInstance(ContainerTestsConsts.CORRECT_INPUT));
+        //
+        //     Assert.AreEqual(child.Resolve<string>(), ContainerTestsConsts.CORRECT_INPUT);
+        // }
 
-            using var child = parent.Scope("child");
-            
-            //Install a new binding AFTER the child container was created
-            parent.InstallSingle(Resolve.FromInstance(ContainerTestsConsts.CORRECT_INPUT));
-
-            Assert.AreEqual(child.Resolve<string>(), ContainerTestsConsts.CORRECT_INPUT);
-        }
-
-        [Test]
-        public void Dispose_DisposingParentContainerWithChildren_DisposeInDFS()
-        {
-            var disposedOrder = new List<string>();
-            string[] shouldBe;
-            using (var parent = new Container("Parent"))
-            {
-                parent.OnDispose.Subscribe(() => disposedOrder.Add(parent.ToString())); 
-                
-                var firstMiddleChild = parent.Scope("firstMiddleChild");
-                firstMiddleChild.OnDispose.Subscribe(() => disposedOrder.Add(firstMiddleChild.ToString())); 
-
-                var firstYoungestChild = firstMiddleChild.Scope("firstYoungestChild");
-                firstYoungestChild.OnDispose.Subscribe(() => disposedOrder.Add(firstYoungestChild.ToString())); 
-
-                var secondMiddleChild = parent.Scope("secondMiddleChild");
-                secondMiddleChild.OnDispose.Subscribe(() => disposedOrder.Add(secondMiddleChild.ToString())); 
-
-                var secondYoungestChild = secondMiddleChild.Scope("secondYoungestChild");
-                secondYoungestChild.OnDispose.Subscribe(() => disposedOrder.Add(secondYoungestChild.ToString())); 
-
-                shouldBe = new[] { secondYoungestChild.ToString(), secondMiddleChild.ToString(), firstYoungestChild.ToString(), firstMiddleChild.ToString(), parent.Context.ToString() };
-            }
-            
-            CollectionAssert.AreEqual(disposedOrder, shouldBe);
-        }
+        // [Test]
+        // public void Dispose_DisposingParentContainerWithChildren_DisposeInDFS()
+        // {
+        //     var disposedOrder = new List<string>();
+        //     string[] shouldBe;
+        //     using (var parent = new Container("Parent"))
+        //     {
+        //         parent.OnDispose.Subscribe(() => disposedOrder.Add(parent.ToString())); 
+        //         
+        //         var firstMiddleChild = parent.Scope("firstMiddleChild");
+        //         firstMiddleChild.OnDispose.Subscribe(() => disposedOrder.Add(firstMiddleChild.ToString())); 
+        //
+        //         var firstYoungestChild = firstMiddleChild.Scope("firstYoungestChild");
+        //         firstYoungestChild.OnDispose.Subscribe(() => disposedOrder.Add(firstYoungestChild.ToString())); 
+        //
+        //         var secondMiddleChild = parent.Scope("secondMiddleChild");
+        //         secondMiddleChild.OnDispose.Subscribe(() => disposedOrder.Add(secondMiddleChild.ToString())); 
+        //
+        //         var secondYoungestChild = secondMiddleChild.Scope("secondYoungestChild");
+        //         secondYoungestChild.OnDispose.Subscribe(() => disposedOrder.Add(secondYoungestChild.ToString())); 
+        //
+        //         shouldBe = new[] { secondYoungestChild.ToString(), secondMiddleChild.ToString(), firstYoungestChild.ToString(), firstMiddleChild.ToString(), parent.Context.ToString() };
+        //     }
+        //     
+        //     CollectionAssert.AreEqual(disposedOrder, shouldBe);
+        // }
     }
 }

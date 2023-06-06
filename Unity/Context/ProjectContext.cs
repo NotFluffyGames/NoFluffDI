@@ -5,11 +5,16 @@ namespace NotFluffy.NoFluffDI
     public class ProjectContext : ScriptableObject
     {
         public const string ProjectContextPath = "ProjectContext";
+        public static IReadOnlyContainer Instance;
 
 #if UNITY_EDITOR
         //For projects with Domain reloading disabled
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetForDomainReloadingDisabled() => ProjectContainer.Instance.Dispose();
+        private static void ResetForDomainReloadingDisabled()
+        {
+            //Instance.Dispose();
+            Instance = null;
+        }
 #endif
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
@@ -33,14 +38,15 @@ namespace NotFluffy.NoFluffDI
 
         private void Init()
         {
-            ProjectContainer.Instance.Install(installers);
+            Instance = installers.CreateContainer("ProjectContainer");
             
             Application.quitting += ApplicationOnQuitting;
         }
 
         private static void ApplicationOnQuitting()
         {
-            ProjectContainer.Instance.Dispose();
+            //Instance.Dispose();
+            Instance = null;
         }
     }
 }

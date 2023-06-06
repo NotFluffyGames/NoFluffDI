@@ -6,11 +6,13 @@ namespace NotFluffy.NoFluffDI.Benchmark
 {
     public class NestedBenchmarkNoFluffDI : MonoProfiler
     {
-        private readonly Container _container = new Container(string.Empty);
+        private readonly IContainerBuilder _builder = new ContainerBuilder(string.Empty);
+        private IReadOnlyContainer _container;
 
         private void Start()
         {
-            _container.Install(Resolvers());
+            _builder.Add(Resolvers());
+            _container = _builder.Build();
         }
 
         private static IEnumerable<IResolverFactory> Resolvers()

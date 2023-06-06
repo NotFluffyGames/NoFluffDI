@@ -20,21 +20,21 @@ namespace NotFluffy.NoFluffDI.Tests
         public static int CorrectConverter_ConvertAndMultiply(string intStr)
             => int.Parse(intStr) * 2;
         
-        public static void BindWrongInstancesToContainer(IContainer container)
+        public static void BindWrongInstancesToContainer(IContainerBuilder container)
         {
-            container.InstallSingle(Resolve.FromInstance(WRONG_INPUT));
+            container.Add(Resolve.FromInstance(WRONG_INPUT));
         }
-        public static void BindCorrectInstancesToContainer(IContainer container)
+        public static void BindCorrectInstancesToContainer(IContainerBuilder container)
         {
-            container.InstallSingle(Resolve.FromInstance(NO_ID_INPUT));
-            container.InstallSingle(Resolve.FromInstance(WITH_ID_INPUT).WithID(ContainerTestsConsts.ID));
+            container.Add(Resolve.FromInstance(NO_ID_INPUT));
+            container.Add(Resolve.FromInstance(WITH_ID_INPUT).WithID(ContainerTestsConsts.ID));
         }
 
-        public static void BindWrongConverterToContainer(IContainer container)
+        public static void BindWrongConverterToContainer(IContainerBuilder container)
         {
             container.SetImplicitConverter<string, int>(WrongConverter_ConvertAndMultiply);
         }
-        public static void BindCorrectConverterToContainer(IContainer container)
+        public static void BindCorrectConverterToContainer(IContainerBuilder container)
         {
             container.SetImplicitConverter<string, int>(CorrectConverter_ConvertAndMultiply);
         }
@@ -43,49 +43,58 @@ namespace NotFluffy.NoFluffDI.Tests
         {
             get
             {
-                IContainer parent;
-                IContainer child;
+                IReadOnlyContainer parent;
+                IReadOnlyContainer child;
                 
-                var direct = new Container("direct");
+                var direct = new ContainerBuilder("direct");
                 BindCorrectConverterToContainer(direct);
                 BindCorrectInstancesToContainer(direct);
 
-                yield return direct;
+                yield return direct.Build();
 
-                parent = new Container("parent1");
-                BindCorrectConverterToContainer(parent);
+                IContainerBuilder builder = new ContainerBuilder("parent1");
+                BindCorrectConverterToContainer(builder);
+                parent = builder.Build();
+                
 
-                child = parent.Scope("child1");
-                BindCorrectInstancesToContainer(child);
+                builder = parent.Scope("child1");
+                BindCorrectInstancesToContainer(builder);
+                child = builder.Build();
                         
                 //Parent has converter, child has the instances to convert
                 yield return child;
 
-                parent = new Container("parent2");
-                BindCorrectConverterToContainer(parent);
-                BindWrongInstancesToContainer(parent);
+                builder = new ContainerBuilder("parent2");
+                BindCorrectConverterToContainer(builder);
+                BindWrongInstancesToContainer(builder);
+                parent = builder.Build();
 
-                child = parent.Scope("child2");
-                BindCorrectInstancesToContainer(child);
-                        
+                builder = parent.Scope("child2");
+                BindCorrectInstancesToContainer(builder);
+                child = builder.Build();
+                
                 //Parent has converter, child has the instances to convert
                 yield return child;
 
-                parent = new Container("parent3");
-                BindCorrectInstancesToContainer(parent);
+                builder = new ContainerBuilder("parent3");
+                BindCorrectInstancesToContainer(builder);
+                parent = builder.Build();
                     
-                child = parent.Scope("child3");
-                BindCorrectConverterToContainer(child);
+                builder = parent.Scope("child3");
+                BindCorrectConverterToContainer(builder);
+                child = builder.Build();
                         
                 //Parent has instances to convert, child has the converter
                 yield return child;
 
-                parent = new Container("parent4");
-                BindCorrectInstancesToContainer(parent);
-                BindWrongConverterToContainer(parent);
+                builder = new ContainerBuilder("parent4");
+                BindCorrectInstancesToContainer(builder);
+                BindWrongConverterToContainer(builder);
+                parent = builder.Build();
                     
-                child = parent.Scope("child4");
-                BindCorrectConverterToContainer(child);
+                builder = parent.Scope("child4");
+                BindCorrectConverterToContainer(builder);
+                child = builder.Build();
                         
                 //Parent has instances to convert, child has the converter
                 yield return child;

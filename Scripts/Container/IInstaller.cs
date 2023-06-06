@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-
-namespace NotFluffy.NoFluffDI
+﻿namespace NotFluffy.NoFluffDI
 {
-    public delegate IEnumerable<IResolverFactory> Installable(IReadOnlyContainer container);
+    public delegate void Installable(IContainerBuilder builder);
 
     public interface IInstallable
     {
-        IEnumerable<IResolverFactory> GetBindings(IReadOnlyContainer container);
+        void InstallBindings(IContainerBuilder builder);
     }
 }

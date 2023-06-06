@@ -7,14 +7,14 @@ namespace NotFluffy.NoFluffDI
         public ResolutionContext( IResolver resolver, IReadOnlyContainer resolverOriginContainer,
             IReadOnlyContainer currentResolutionContainer)
         {
-            Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
+            ContextResolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
             OriginContainer = resolverOriginContainer ??
                                       throw new ArgumentNullException(nameof(resolverOriginContainer));
             CurrentContainer = currentResolutionContainer ??
                                          throw new ArgumentNullException(nameof(currentResolutionContainer));
         }
         
-        public IResolver Resolver { get; }
+        public IResolver ContextResolver { get; }
         public IReadOnlyContainer OriginContainer { get; }
         public IReadOnlyContainer CurrentContainer { get; }
     }

@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace NotFluffy.NoFluffDI
 {
-    public static class GameobjectContextExt
+    public static class GameObjectContextExt
     {
-        private static readonly Dictionary<Transform, IContainer> gameObjectContainers = new();
-        private static readonly List<GameObjectLazyBind> LazyBinds = new();
+        private static readonly Dictionary<Transform, IReadOnlyContainer> gameObjectContainers = new();
+        private static readonly Dictionary<Transform, List<GameObjectLazyBind>> LazyBinds = new();
 
 #if UNITY_EDITOR
         //For projects with Domain reloading disabled
@@ -24,8 +25,6 @@ namespace NotFluffy.NoFluffDI
 #endif
         public static IReadOnlyContainer GetContainer(this Transform transform)
         {
-            InitLazyBinds();
-
             //Turn into multi-key dictionary with scene key?
             var containers = gameObjectContainers;
 
@@ -45,19 +44,22 @@ namespace NotFluffy.NoFluffDI
             return transform.gameObject.scene.GetContainer();
         }
 
-        private static void InitLazyBinds()
+        private static void InitLazyBinds(Transform transform, IContainerBuilder builder)
         {
-            if (LazyBinds.Count == 0)
+            if(!LazyBinds.TryGetValue(transform, out var transformBinds))
+                return;
+            
+            if (transformBinds.Count == 0)
                 return;
 
             //Cache binds
-            var binds = new List<GameObjectLazyBind>(LazyBinds);
-            LazyBinds.Clear();
-
+            var binds = transformBinds.ToList();
+            transformBinds.Clear();
+        
             binds.Sort((a, b) => CompareInHierarchy(a.Transform, b.Transform));
-
+        
             foreach (var bind in binds)
-                bind.Callback?.Invoke(bind.Transform.GetOrCreateScope());
+                bind.Callback?.Invoke(builder);
         }
 
         private static int CompareInHierarchy(Transform a, Transform b)
@@ -76,59 +78,37 @@ namespace NotFluffy.NoFluffDI
 #if UNITY_2022_2_OR_NEWER
         [HideInCallstack]
 #endif
-        public static IContainer GetOrCreateScope(this Transform transform)
+        public static bool TryGetScope(this Transform transform, out IReadOnlyContainer container)
         {
-            return ContextHelper.GetOrCreateScope(
-                transform.GetContainer(),
-                transform,
-                transform,
-                gameObjectContainers);
+            return gameObjectContainers.TryGetValue(transform, out container);
         }
 
-        public static void LazyGetOrCreateScope(this Transform transform, Action<IContainer> callback)
+        public static IContainerBuilder CreateScope(this Transform transform)
         {
-            if (gameObjectContainers.TryGetValue(transform, out var current))
-                callback?.Invoke(current);
-            else
-                LazyBinds.Add(new GameObjectLazyBind(transform, callback));
+            var builder = ContextHelper.CreateScope(transform.GetContainer(), transform, transform, gameObjectContainers);
+            InitLazyBinds(transform, builder);
+            return builder;
+        }
+
+        public static void LazyBindScope(this Transform transform, Action<IContainerBuilder> bind)
+        {
+            LazyBinds[transform] ??= new List<GameObjectLazyBind>();
+            LazyBinds[transform].Add(new GameObjectLazyBind(transform, bind));
         }
 
         private readonly struct GameObjectLazyBind
         {
             public readonly Transform Transform;
-            public readonly Action<IContainer> Callback;
+            public readonly Action<IContainerBuilder> Callback;
 
-            public GameObjectLazyBind(Transform transform, Action<IContainer> callback)
+            public GameObjectLazyBind(Transform transform, Action<IContainerBuilder> callback)
             {
                 Transform = transform;
                 Callback = callback;
             }
         }
-
-        private static void BindContainer(this Transform transform, IContainer container)
+        
+        internal static void BindContainer(this Transform transform, IReadOnlyContainer container)
             => ContextHelper.BindContainer(transform, gameObjectContainers, container);
-
-        public static GameObject InstantiateFromPrefab(
-            this IContainer container,
-            GameObject prefab,
-            Transform parent = null)
-        {
-            var instance = ContainerInstantiateExt.InstantiateDisabled(prefab, parent, out bool state);
-            instance.transform.BindContainer(container);
-            ContainerInstantiateExt.SetState(prefab, instance, state);
-            return instance;
-        }
-
-        public static T InstantiateFromPrefab<T>(
-            this IContainer container,
-            T prefab,
-            Transform parent = null)
-            where T : Component
-        {
-            var instance = ContainerInstantiateExt.InstantiateDisabled(prefab, parent, out bool state);
-            instance.transform.BindContainer(container);
-            ContainerInstantiateExt.SetState(prefab, instance, state);
-            return instance;
-        }
     }
 }

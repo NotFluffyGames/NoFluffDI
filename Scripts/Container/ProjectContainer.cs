@@ -2,7 +2,7 @@
 {
     public static class ProjectContainer
     {
-        private static IContainer instance;
-        public static IContainer Instance => instance ??= new Container("ProjectContainer");
+        // private static IReadOnlyContainer instance;
+        // public static IReadOnlyContainer Instance => instance ??= new ContainerBuilder("ProjectContainer").Build();
     }
 }

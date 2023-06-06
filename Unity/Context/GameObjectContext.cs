@@ -7,7 +7,7 @@ namespace NotFluffy.NoFluffDI
     [DisallowMultipleComponent]
     public class GameObjectContext : MonoContext
     {
-        protected override void BindContext(Action<IContainer> callback)
-            => this.LazyGetOrCreateScope(callback);
+        protected override void BindContext(Action<IContainerBuilder> callback)
+            => callback?.Invoke(this.CreateScope());
     }
 }

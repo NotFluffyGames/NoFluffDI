@@ -1,18 +1,54 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace NotFluffy.NoFluffDI
 {
     public static class ContainerExt
     {
-        public static void Install(this IContainer container, IInstallable installable)
-            => container.Install(installable.GetBindings);
+        public static void Add(this IContainerBuilder builder, params IResolverFactory[] resolverFactories)
+        {
+            foreach (var resolverFactory in resolverFactories) 
+                builder.Add(resolverFactory);
+        }
+        public static void Add(this IContainerBuilder builder, IEnumerable<IResolverFactory> resolverFactories)
+        {
+            foreach (var resolverFactory in resolverFactories) 
+                builder.Add(resolverFactory);
+        }
 
-        public static void Install(this IContainer container, Installable installable)
-            => container.Install(installable?.Invoke(container));
+        public static IReadOnlyContainer CreateContainer(this IInstallable installable, object context= null, IReadOnlyContainer parent = null)
+        {
+            var builder = new ContainerBuilder(context, parent);
+            builder.Install(installable);
+            return builder.Build();
+        }
+        
+        public static IReadOnlyContainer CreateContainer(this IResolverFactory resolverFactory, object context = null, IReadOnlyContainer parent = null)
+        {
+            var builder = new ContainerBuilder(context, parent);
+            builder.Add(resolverFactory);
+            return builder.Build();
+        }
+        
+        public static IReadOnlyContainer CreateContainer(this IEnumerable<IResolverFactory> resolverFactories, object context= null, IReadOnlyContainer parent = null)
+        {
+            var builder = new ContainerBuilder(context, parent);
+            builder.Add(resolverFactories);
+            return builder.Build();
+        }
+        
+        public static IContainerBuilder Install(this IContainerBuilder builder, IInstallable installable)
+        {
+            installable.InstallBindings(builder);
+            return builder;
+        }
 
-        public static void InstallSingle(this IContainer container, IResolverFactory resolver)
-            => container.Install(Enumerable.Repeat(resolver, 1));
+        public static IContainerBuilder Install(this IContainerBuilder builder, Installable installable)
+        {
+            installable?.Invoke(builder);
+            return builder;
+        }
 
         public static bool TryResolve<T>(this IReadOnlyContainer container, out T value, object id = null)
         {
@@ -47,21 +83,15 @@ namespace NotFluffy.NoFluffDI
         public static TContract ResolveFromFactory<TContract>(this IReadOnlyContainer container, object id = null)
             => container.Resolve<IFactory<TContract>>(id).Create();
 
-        public static T Resolve<T>(this IResolutionContext ctx)
+        public static T Resolve<T>(this IResolutionContext ctx, object id = null)
         {
-            var resolver = ctx.Resolver;
-            var value = resolver.Resolve(ctx);
-
-            if (value is T result)
-                return result;
-
-            throw new WrongContractTypeException(resolver.IDs, value.GetType());
+            return ctx.CurrentContainer.Resolve<T>(id);
         }
 
         public static object Resolve(this IResolutionContext ctx)
-            => ctx.Resolver.Resolve(ctx);
+            => ctx.ContextResolver.Resolve(ctx);
 
-        public static IContainer Scope(this IReadOnlyContainer container, string containerName, IInstallable installable)
+        public static IContainerBuilder Scope(this IReadOnlyContainer container, string containerName, IInstallable installable)
         {
             var newContainer = container.Scope(containerName);
             newContainer.Install(installable);
@@ -70,6 +100,7 @@ namespace NotFluffy.NoFluffDI
 
         public static bool CanConvert<TFrom, TTo>(this IReadOnlyContainer container)
             => container.CanConvert(typeof(TFrom), typeof(TTo));
+        
         public static bool CanConvert(this IReadOnlyContainer container, Type from, Type to)
         {
             return container.GetConverter(from, to).Valid;

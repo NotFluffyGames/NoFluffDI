@@ -138,14 +138,15 @@ namespace NotFluffy.NoFluffDI.Editor.DebuggingWindow
                 r.Parent = child;
             }
 
-            foreach (var c in container.Children) 
-                BuildDataRecursively(child, c);
+            // foreach (var c in container.Children) 
+            //     BuildDataRecursively(child, c);
         }
         
         private static Dictionary<ResolverID, IResolver> GetResolvers(IReadOnlyContainer container)
         {
-            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
-            return (Dictionary<ResolverID, IResolver>)typeof(Container).GetField("resolvers", flags).GetValue(container);
+            //const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            return new();
+            //return (Dictionary<ResolverID, IResolver>)typeof(ContainerBuilder.Container).GetField("resolvers", flags).GetValue(container);
         }
         
         private IList<DebuggerWindowTreeElement> GetData()
@@ -153,7 +154,7 @@ namespace NotFluffy.NoFluffDI.Editor.DebuggingWindow
             var root = new DebuggerWindowTreeElement("Root", -1, ++_id, EditorGUIUtility.IconContent(ContainerIconPath).image, null, null);
 
             if(ProjectContext.IsInitialized)
-                BuildDataRecursively(root, ProjectContainer.Instance);
+                BuildDataRecursively(root, ProjectContext.Instance);
 
             var list = new List<DebuggerWindowTreeElement>();
             TreeElementUtility.TreeToList(root, list);

@@ -5,31 +5,34 @@ using NotFluffy.NoFluffRx;
 namespace NotFluffy.NoFluffDI
 {
 
-    public interface IContainer : 
-        IReadOnlyContainer, 
-        IReactiveDisposable
+    public interface IContainerBuilder
     {
         /// <summary>
         /// Installs new binds into the container
         /// </summary>
         /// <param name="resolverFactories"></param>
-        void Install(IEnumerable<IResolverFactory> resolverFactories);
-        void SetImplicitConverter<TFrom, TTo>(Converter<TFrom, TTo> converter);
+        IContainerBuilder Add(IResolverFactory resolverFactory);
+        IContainerBuilder SetImplicitConverter<TFrom, TTo>(Converter<TFrom, TTo> converter);
+
+        IReadOnlyContainer Build();
+
+        void RegisterBuildCallback(Action<IReadOnlyContainer> container);
     }
-    
+
     /// <summary>
     /// Each container is a node in a tree of containers, each holds his local resolvers
     /// </summary>
     public interface IReadOnlyContainer : 
-        ITreeNode<IReadOnlyContainer>,
+        //ITreeNode<IReadOnlyContainer>,
         IReadOnlyReactiveDisposable
     {
+        IReadOnlyContainer Parent { get; }
         /// <summary>
         /// The context can be used to identify the container, mainly used for debugging and editor tools
         /// </summary>
         object Context { get; }
         
-        IContainer Scope(object context);
+        IContainerBuilder Scope(object context);
         
         /// <summary>
         /// The local resolvers inside the container, doesn't take into account the resolvers in the parents

@@ -1,6 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Reactive.Disposables;
+using JetBrains.Annotations;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -12,14 +11,14 @@ namespace NotFluffy.NoFluffDI
             this IInstallable installable,
             GameObject prefab,
             Transform parent = null)
-            => InstantiateFromPrefab(installable.GetBindings, prefab, parent);
+            => InstantiateFromPrefab(installable.InstallBindings, prefab, parent);
 
         public static T InstantiateFromPrefab<T>(
             this IInstallable installable,
             T prefab,
             Transform parent = null)
             where T : Component
-            => InstantiateFromPrefab(installable.GetBindings, prefab, parent);
+            => InstantiateFromPrefab(installable.InstallBindings, prefab, parent);
 
         public static GameObject InstantiateFromPrefab(
             this Installable installable,
@@ -27,8 +26,9 @@ namespace NotFluffy.NoFluffDI
             Transform parent = null)
         {
             var instance = InstantiateDisabled(prefab, parent, out bool state);
-            var container = instance.GetOrCreateScope();
-            container.Install(installable);
+            var builder = instance.CreateScope();
+            builder.Install(installable);
+            builder.Build();
             SetState(prefab, instance, state);
             return instance;
         }
@@ -40,8 +40,9 @@ namespace NotFluffy.NoFluffDI
             where T : Component
         {
             var instance = InstantiateDisabled(prefab, parent, out bool state);
-            var container = instance.GetOrCreateScope();
-            container.Install(installable);
+            var builder = instance.CreateScope();
+            builder.Install(installable);
+            builder.Build();
             SetState(prefab, instance, state);
             return instance;
         }
@@ -52,8 +53,9 @@ namespace NotFluffy.NoFluffDI
             Transform parent = null)
         {
             var instance = InstantiateDisabled(prefab, parent, out bool state);
-            var container = instance.GetOrCreateScope();
-            container.Install(installable);
+            var builder = instance.CreateScope();
+            builder.Add(installable);
+            builder.Build();
             SetState(prefab, instance, state);
             return instance;
         }
@@ -65,8 +67,9 @@ namespace NotFluffy.NoFluffDI
             where T : Component
         {
             var instance = InstantiateDisabled(prefab, parent, out bool state);
-            var container = instance.GetOrCreateScope();
-            container.Install(installable);
+            var builder = instance.CreateScope();
+            builder.Add(installable);
+            builder.Build();
             SetState(prefab, instance, state);
             return instance;
         }
@@ -77,12 +80,21 @@ namespace NotFluffy.NoFluffDI
             GameObject prefab,
             Transform parent = null)
         {
-            var scope = container.Scope(prefab.name);
+            var instance = InstantiateDisabled(prefab, parent, out var originalState);
 
+            instance.transform.BindContainer(container);
+            
             if (installable != null)
-                scope.Install(installable);
+                instance.transform.LazyBindScope(Bind);
+            
+            instance.SetActive(originalState);
 
-            return scope.InstantiateFromPrefab(prefab, parent);
+            return instance;
+
+            void Bind(IContainerBuilder builder)
+            {
+                builder.Install(installable);
+            }
         }
 
         public static T InstantiateFromPrefab<T>(
@@ -97,15 +109,17 @@ namespace NotFluffy.NoFluffDI
             if (installable != null)
                 scope.Install(installable);
 
-            return scope.InstantiateFromPrefab(prefab, parent);
+            return scope.Build().InstantiateFromPrefab(prefab, parent);
         }
 
+        [UsedImplicitly]
         public static GameObject InstantiateFromPrefab(
             this IReadOnlyContainer container,
             GameObject prefab,
             Transform parent = null)
             => container.InstantiateFromPrefab(null, prefab, parent);
 
+        [UsedImplicitly]
         public static T InstantiateFromPrefab<T>(
             this IReadOnlyContainer container,
             T prefab,
@@ -113,32 +127,19 @@ namespace NotFluffy.NoFluffDI
             where T : Component
             => container.InstantiateFromPrefab(null, prefab, parent);
 
-        public static GameObject InstantiateDisabled(
+        private static GameObject InstantiateDisabled(
             GameObject prefab,
             Transform parent,
             out bool originalState)
         {
             originalState = prefab.activeSelf;
             prefab.SetActive(false);
-            return Object.Instantiate(prefab, parent);
+            var instance = Object.Instantiate(prefab, parent);
+            prefab.SetActive(originalState);
+            return instance;
         }
 
-        public static IDisposable InstantiateDisabled(
-            GameObject prefab,
-            Transform parent,
-            out GameObject instance)
-        {
-            var newI = instance = InstantiateDisabled(prefab, parent, out bool originalState);
-            return Disposable.Create(Dispose);
-
-            void Dispose()
-            {
-                prefab.SetActive(originalState);
-                newI.SetActive(originalState);
-            }
-        }
-
-        public static T InstantiateDisabled<T>(
+        private static T InstantiateDisabled<T>(
             T prefab,
             Transform parent,
             out bool originalState)
@@ -149,29 +150,13 @@ namespace NotFluffy.NoFluffDI
             return Object.Instantiate(prefab, parent);
         }
 
-        public static IDisposable InstantiateDisabled<T>(
-            T prefab,
-            Transform parent,
-            out T instance)
-            where T : Component
-        {
-            var newI = instance = InstantiateDisabled(prefab, parent, out bool originalState);
-            return Disposable.Create(Dispose);
-
-            void Dispose()
-            {
-                prefab.gameObject.SetActive(originalState);
-                newI.gameObject.SetActive(originalState);
-            }
-        }
-
-        public static void SetState(GameObject prefab, GameObject instance, bool state)
+        private static void SetState(GameObject prefab, GameObject instance, bool state)
         {
             prefab.SetActive(state);
             instance.SetActive(state);
         }
 
-        public static void SetState<T>(T prefab, T instance, bool state)
+        private static void SetState<T>(T prefab, T instance, bool state)
             where T : Component
             => SetState(prefab.gameObject, instance.gameObject, state);
     }

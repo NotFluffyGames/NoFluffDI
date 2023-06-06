@@ -4,7 +4,7 @@ namespace NotFluffy.NoFluffDI
 {
     public class SceneContext : MonoContext
     {
-        protected override void BindContext(Action<IContainer> callback) 
-            => callback?.Invoke(gameObject.scene.GetOrCreateScope());
+        protected override void BindContext(Action<IContainerBuilder> callback)
+            => callback?.Invoke(gameObject.scene.CreateScope());
     }
 }
