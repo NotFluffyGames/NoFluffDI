@@ -1,24 +1,24 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 namespace NotFluffy.NoFluffDI
 {
     public class TransientResolver : IResolver
     {
-        public TransientResolver(IEnumerable<ResolverID> IDs, Func<IResolutionContext, object> method)
+        private readonly Func<IResolutionContext, UniTask<object>> method;
+        
+        public IEnumerable<ResolverID> IDs { get; }
+        public int Resolutions { get; private set; }
+        
+        public TransientResolver(IEnumerable<ResolverID> IDs, Func<IResolutionContext, UniTask<object>> method)
         {
             this.method = method ?? throw new ArgumentNullException(nameof(method));
             this.IDs = IDs;
             Resolutions = 0;
         }
 
-        public IEnumerable<ResolverID> IDs { get; }
-        public int Resolutions { get; private set; }
-
-
-        private readonly Func<IResolutionContext, object> method;
-
-        public virtual object Resolve(IResolutionContext container)
+        public virtual UniTask<object> Resolve(IResolutionContext container)
         {
             ++Resolutions;
             return method(container);

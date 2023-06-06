@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 namespace NotFluffy.NoFluffDI
 {
@@ -12,7 +13,7 @@ namespace NotFluffy.NoFluffDI
 	{
 		IEnumerable<ResolverID> IDs { get; }
 		int Resolutions { get; }
-		object Resolve(IResolutionContext context);
+		UniTask<object> Resolve(IResolutionContext context);
 	}
 
     public interface IResolverFactory

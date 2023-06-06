@@ -131,11 +131,11 @@ namespace NotFluffy.NoFluffDI.Editor.DebuggingWindow
 
             foreach (var (id, resolver) in GetResolvers(container))
             {
-                var v = resolver.Resolve(new ResolutionContext(resolver, container, container));
-                var rText = $"{resolver.GetType().Name}<{string.Join(',', new[] { id.Type.Name, id.Id }.Where(o => o != null) )}> → {v.GetType().Name}";
-                var r = new DebuggerWindowTreeElement(rText, child.Depth + 1, ++_id,  GetIcon(v), container, resolver);
-                child.Children.Add(r);
-                r.Parent = child;
+                //var v = resolver.Resolve(new ResolutionContext(resolver, container, container));
+                //var rText = $"{resolver.GetType().Name}<{string.Join(',', new[] { id.Type.Name, id.Id }.Where(o => o != null) )}> → {v.GetType().Name}";
+                //var r = new DebuggerWindowTreeElement(rText, child.Depth + 1, ++_id,  GetIcon(v), container, resolver);
+                //child.Children.Add(r);
+                //r.Parent = child;
             }
 
             // foreach (var c in container.Children) 

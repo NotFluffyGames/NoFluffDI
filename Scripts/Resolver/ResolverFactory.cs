@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 
 namespace NotFluffy.NoFluffDI
 {
     public class ResolverFactory : IResolverFactory
     {
-        private readonly Func<IResolutionContext, object> method;
+        private readonly Func<IResolutionContext, UniTask<object>> method;
         public bool IsLazy { get; private set; } = true;
         private bool Transient;
         private readonly List<Type> types = new();
         private object ID { get; set; }
 
-        public ResolverFactory(Type type, Func<IResolutionContext, object> method, params Type[] extraTypes)
+        public ResolverFactory(Type type, Func<IResolutionContext, UniTask<object>> method, params Type[] extraTypes)
         {
             if(type == null)
                 throw new ArgumentNullException(nameof(type));

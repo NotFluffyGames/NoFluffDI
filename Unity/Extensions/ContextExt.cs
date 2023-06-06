@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using Cysharp.Threading.Tasks;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -135,21 +136,21 @@ namespace NotFluffy.NoFluffDI
         [HideInCallstack]
 #endif
         [UsedImplicitly]
-        public static T Resolve<T>(this Scene scene, object id = null)
+        public static UniTask<T> Resolve<T>(this Scene scene, object id = null)
             => scene.GetContainer().Resolve<T>(id);
 
 #if UNITY_2022_2_OR_NEWER
         [HideInCallstack]
 #endif
         [UsedImplicitly]
-        public static T Resolve<T>(this GameObject gameObject, object id = null)
+        public static UniTask<T> Resolve<T>(this GameObject gameObject, object id = null)
             => gameObject.transform.GetContainer().Resolve<T>(id);
 
 #if UNITY_2022_2_OR_NEWER
         [HideInCallstack]
 #endif
         [UsedImplicitly]
-        public static T Resolve<T>(this Component component, object id = null)
+        public static UniTask<T> Resolve<T>(this Component component, object id = null)
             => component.GetContainer().Resolve<T>(id);
 
         #endregion

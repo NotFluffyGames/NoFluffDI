@@ -1,13 +1,16 @@
+using System.Collections;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using NotFluffy.NoFluffRx;
+using UnityEngine.TestTools;
 
 namespace NotFluffy.NoFluffDI.Tests
 {
     public class ScopedContainerTests
     {
-        [Test]
-        public void Resolve_OverrideParentInstallInChildAndResolveChild_ResolveChildValue()
+        [UnityTest]
+        public IEnumerator Resolve_OverrideParentInstallInChildAndResolveChild_ResolveChildValue()
         {
             IContainerBuilder builder = new ContainerBuilder("parent");
             builder.Add(Resolve.FromInstance(ContainerTestsConsts.WRONG_INPUT));
@@ -18,11 +21,16 @@ namespace NotFluffy.NoFluffDI.Tests
             builder.Add(Resolve.FromInstance(ContainerTestsConsts.CORRECT_INPUT));
             
             var child = builder.Build();
-            Assert.AreEqual(child.Resolve<string>(), ContainerTestsConsts.CORRECT_INPUT);
+            string result = default;
+            yield return child
+                .Resolve<string>()
+                .ToCoroutine(r => result = r);
+
+            Assert.AreEqual(result, ContainerTestsConsts.CORRECT_INPUT);
         }
 
-        [Test]
-        public void Resolve_OverrideParentInstallInChildAndResolveParent_ResolveParentValue()
+        [UnityTest]
+        public IEnumerator Resolve_OverrideParentInstallInChildAndResolveParent_ResolveParentValue()
         {
             IContainerBuilder builder = new ContainerBuilder();
 
@@ -30,7 +38,9 @@ namespace NotFluffy.NoFluffDI.Tests
 
             var unused = Resolve.FromInstance(ContainerTestsConsts.WRONG_INPUT).CreateContainer("child", parent);
 
-            Assert.AreEqual(parent.Resolve<string>(), ContainerTestsConsts.CORRECT_INPUT);
+            string result = null;
+            yield return parent.Resolve<string>().ToCoroutine(r => result = r);
+            Assert.AreEqual(result, ContainerTestsConsts.CORRECT_INPUT);
         }
 
         // [Test]

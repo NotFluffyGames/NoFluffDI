@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Subjects;
+using Cysharp.Threading.Tasks;
 using NotFluffy.NoFluffRx;
 
 namespace NotFluffy.NoFluffDI
@@ -19,7 +20,6 @@ namespace NotFluffy.NoFluffDI
             return new Container(
                 Context,
                 resolvers,
-                implicitConverters,
                 Parent);
         }
         
@@ -30,8 +30,6 @@ namespace NotFluffy.NoFluffDI
             public object Context { get; }
             
             public IReadOnlyDictionary<ResolverID, IResolver> Resolvers { get; }
-            
-            public IReadOnlyDictionary<Type, ConverterBind> ImplicitConverters { get; }
 
             private bool disposed;
 
@@ -41,11 +39,9 @@ namespace NotFluffy.NoFluffDI
             public Container(
                 object context, 
                 IEnumerable<IResolverFactory> resolvers,
-                IReadOnlyDictionary<Type, ConverterBind> implicitConverters,
                 IReadOnlyContainer parent = null)
             {
                 Context = context;
-                ImplicitConverters = implicitConverters;
                 Parent = parent;
 
                 Parent?.OnDispose.Subscribe(Dispose);
@@ -82,13 +78,6 @@ namespace NotFluffy.NoFluffDI
                     //First look for a direct resolver
                     if (GetResolver(type, id) != null)
                         return true;
-
-                    var converters = GetAllPossibleConverters(type);
-
-                    //Then look for a implicit converter that his source type can be resolved (BFS search)
-                    foreach (var converter in converters)
-                        if (converter.Valid)
-                            typesToCheck.Enqueue(converter.From);
                 }
 
                 return false;
@@ -123,51 +112,16 @@ namespace NotFluffy.NoFluffDI
                 return resolvers;
             }
 
-            public object Resolve(Type contract, object id = null)
+            public async UniTask<object> Resolve(Type contract, object id = null)
             {
                 var resolverID = new ResolverID(contract, id);
                 //Try resolve using a direct resolver
                 var ctx = GetResolver(resolverID);
 
                 if (ctx != null)
-                    return ctx.Resolve();
-
-                //Try to find a matching converters and resolve their parent type
-                foreach (var converter in GetAllPossibleConverters(contract))
-                {
-                    if (!converter.Valid)
-                        continue;
-
-                    resolverID = new ResolverID(converter.From, id);
-                    var converterCtx = GetResolver(resolverID);
-                    if (converterCtx != null)
-                        return converter.Converter(converterCtx.Resolve());
-                }
+                    return await ctx.Resolve();
 
                 throw new NoMatchingResolverException(contract);
-            }
-
-            public ConverterBind GetConverter(Type from, Type to)
-            {
-                return GetAllPossibleConverters(to)
-                    .FirstOrDefault(c => c.From == from);
-            }
-
-            private IEnumerable<ConverterBind> GetAllPossibleConverters(Type to)
-            {
-                return SelfAndParents()
-                    .SelectWhile<IReadOnlyContainer, ConverterBind>(TryGetConverter);
-
-                bool TryGetConverter(IReadOnlyContainer node, out ConverterBind c)
-                {
-                    if (node.ImplicitConverters == null)
-                    {
-                        c = default;
-                        return false;
-                    }
-                    
-                    return node.ImplicitConverters.TryGetValue(to, out c);
-                }
             }
 
             private IResolutionContext GetResolver(Type contract, object id = null)

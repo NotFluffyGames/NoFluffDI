@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+// ReSharper disable UnusedMember.Global
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace NotFluffy.NoFluffDI
@@ -50,7 +52,7 @@ namespace NotFluffy.NoFluffDI
             return builder;
         }
 
-        public static bool TryResolve<T>(this IReadOnlyContainer container, out T value, object id = null)
+        public static bool TryResolve<T>(this IReadOnlyContainer container, out UniTask<T> value, object id = null)
         {
             if (Contains<T>(container, id))
             {
@@ -77,18 +79,19 @@ namespace NotFluffy.NoFluffDI
         public static bool Contains<T>(this IReadOnlyContainer container, object id = null)
             => container.Contains(typeof(T), id);
 
-        public static TContract Resolve<TContract>(this IReadOnlyContainer container, object id = null) 
-            => (TContract)container.Resolve(typeof(TContract), id);
+        public static async UniTask<TContract> Resolve<TContract>(this IReadOnlyContainer container, object id = null) 
+            => (TContract) await container.Resolve(typeof(TContract), id);
 
-        public static TContract ResolveFromFactory<TContract>(this IReadOnlyContainer container, object id = null)
-            => container.Resolve<IFactory<TContract>>(id).Create();
-
-        public static T Resolve<T>(this IResolutionContext ctx, object id = null)
+        public static async UniTask<TContract> ResolveFromFactory<TContract>(this IReadOnlyContainer container, object id = null)
         {
-            return ctx.CurrentContainer.Resolve<T>(id);
+            var factory = await container.Resolve<IFactory<TContract>>(id);
+            return await factory.Create();
         }
 
-        public static object Resolve(this IResolutionContext ctx)
+        public static UniTask<T> Resolve<T>(this IResolutionContext ctx, object id = null) 
+            => ctx.CurrentContainer.Resolve<T>(id);
+
+        public static UniTask<object> Resolve(this IResolutionContext ctx)
             => ctx.ContextResolver.Resolve(ctx);
 
         public static IContainerBuilder Scope(this IReadOnlyContainer container, string containerName, IInstallable installable)
@@ -96,27 +99,6 @@ namespace NotFluffy.NoFluffDI
             var newContainer = container.Scope(containerName);
             newContainer.Install(installable);
             return newContainer;
-        }
-
-        public static bool CanConvert<TFrom, TTo>(this IReadOnlyContainer container)
-            => container.CanConvert(typeof(TFrom), typeof(TTo));
-        
-        public static bool CanConvert(this IReadOnlyContainer container, Type from, Type to)
-        {
-            return container.GetConverter(from, to).Valid;
-        }
-
-        public static TTo Convert<TFrom, TTo>(this IReadOnlyContainer container, TFrom from)
-            => (TTo)container.Convert(typeof(TFrom), typeof(TTo), from);
-        
-        public static object Convert(this IReadOnlyContainer container, Type from, Type to, object toConvert)
-        {
-            var converter = container.GetConverter(from, to);
-            
-            if(converter.Valid)
-                return converter.Converter(toConvert);
-
-            throw new NoMatchingConverterException(from, to);
         }
     }
 }

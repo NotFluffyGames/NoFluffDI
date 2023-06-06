@@ -202,10 +202,10 @@ namespace NotFluffy.NoFluffDI.Editor.DebuggingWindow
             
             if (r != null)
             {
-                var v = r.Resolve(new ResolutionContext(r, c, c));
+                //var v = r.Resolve(new ResolutionContext(r, c, c));
                 
-                if(Ping(v))
-                    return;
+                //if(Ping(v))
+                  //  return;
             }
 
             Ping(c.Context);

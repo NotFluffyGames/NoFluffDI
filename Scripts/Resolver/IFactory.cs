@@ -1,12 +1,14 @@
+using Cysharp.Threading.Tasks;
+
 namespace NotFluffy
 {
-    public interface IFactory<out T>
+    public interface IFactory<T>
     {
-        T Create();
+        UniTask<T> Create();
     }
 
-    public interface IFactory<out TOut, in TIn>
+    public interface IFactory<TOut, in TIn>
     {
-        TOut Create(TIn input);
+        UniTask<TOut> Create(TIn input);
     }
 }

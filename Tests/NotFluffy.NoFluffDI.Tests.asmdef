@@ -6,7 +6,8 @@
         "NotFluffy.NoFluffDI",
         "NotFluffy.NoFluffRx",
         "NotFluffy.NoFluffRx.Unity",
-        "NotFluffy"
+        "UniTask",
+        "UnityEngine.TestRunner"
     ],
     "includePlatforms": [
         "Editor"
@@ -16,7 +17,6 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "nunit.framework.dll",
-        "FluentAssertions.dll",
         "System.Reactive.dll"
     ],
     "autoReferenced": false,
