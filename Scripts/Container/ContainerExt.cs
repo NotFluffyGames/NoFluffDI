@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 // ReSharper disable UnusedMember.Global
 // ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedMethodReturnValue.Global
 
 namespace NotFluffy.NoFluffDI
 {
@@ -13,6 +14,7 @@ namespace NotFluffy.NoFluffDI
             foreach (var resolverFactory in resolverFactories) 
                 builder.Add(resolverFactory);
         }
+        
         public static void Add(this IContainerBuilder builder, IEnumerable<IResolverFactory> resolverFactories)
         {
             foreach (var resolverFactory in resolverFactories) 
@@ -82,14 +84,8 @@ namespace NotFluffy.NoFluffDI
         public static async UniTask<TContract> Resolve<TContract>(this IReadOnlyContainer container, object id = null) 
             => (TContract) await container.Resolve(typeof(TContract), id);
 
-        public static async UniTask<TContract> ResolveFromFactory<TContract>(this IReadOnlyContainer container, object id = null)
-        {
-            var factory = await container.Resolve<IFactory<TContract>>(id);
-            return await factory.Create();
-        }
-
         public static UniTask<T> Resolve<T>(this IResolutionContext ctx, object id = null) 
-            => ctx.CurrentContainer.Resolve<T>(id);
+            => ctx.Container.Resolve<T>(id);
 
         public static UniTask<object> Resolve(this IResolutionContext ctx)
             => ctx.ContextResolver.Resolve(ctx);

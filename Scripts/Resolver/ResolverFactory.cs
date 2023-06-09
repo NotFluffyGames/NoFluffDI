@@ -13,14 +13,14 @@ namespace NotFluffy.NoFluffDI
         private readonly List<Type> types = new();
         private object ID { get; set; }
 
-        public ResolverFactory(Type type, Func<IResolutionContext, UniTask<object>> method, params Type[] extraTypes)
+        public ResolverFactory(Type type, Func<IResolutionContext, UniTask<object>> method, IReadOnlyCollection<Type> extraTypes)
         {
             if(type == null)
                 throw new ArgumentNullException(nameof(type));
 
             types.Add(type);
 
-            if(extraTypes is { Length: > 0 })
+            if(extraTypes is { Count: > 0 })
                 types.AddRange(extraTypes);
 
             this.method = method ?? throw new ArgumentNullException(nameof(method));

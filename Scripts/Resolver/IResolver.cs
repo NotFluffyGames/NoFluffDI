@@ -7,7 +7,7 @@ namespace NotFluffy.NoFluffDI
 	{
 		IResolver ContextResolver { get; }
 		IReadOnlyContainer OriginContainer { get; }
-		IReadOnlyContainer CurrentContainer { get; }
+		IReadOnlyContainer Container { get; }
 	}
     public interface IResolver
 	{

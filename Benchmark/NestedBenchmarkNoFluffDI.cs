@@ -17,10 +17,10 @@ namespace NotFluffy.NoFluffDI.Benchmark
 
         private static IEnumerable<IResolverFactory> Resolvers()
         {
-            yield return Resolve.FromMethod<IA>(async c => new A( await c.Resolve<IB>())).AsTransient();
-            yield return Resolve.FromMethod<IB>(async c => new B( await c.Resolve<IC>())).AsTransient();
-            yield return Resolve.FromMethod<IC>(async c => new C( await c.Resolve<ID>())).AsTransient();
-            yield return Resolve.FromMethod<ID>(async c => new D( await c.Resolve<IE>())).AsTransient();
+            yield return Resolve.FromMethodAsync<IA>(async c => new A( await c.Resolve<IB>())).AsTransient();
+            yield return Resolve.FromMethodAsync<IB>(async c => new B( await c.Resolve<IC>())).AsTransient();
+            yield return Resolve.FromMethodAsync<IC>(async c => new C( await c.Resolve<ID>())).AsTransient();
+            yield return Resolve.FromMethodAsync<ID>(async c => new D( await c.Resolve<IE>())).AsTransient();
             yield return Resolve.FromNew<IE, E>().AsTransient();
         }
 
