@@ -48,7 +48,7 @@ namespace NotFluffy.NoFluffRx
         public static IAwaiter GetAwaiter(this IObservable<Unit> observable)
         {
             var awaiter = new Awaiter();
-            observable.Subscribe(awaiter);
+            observable.LastAsync().Subscribe(awaiter);
             return awaiter;
         }
     }

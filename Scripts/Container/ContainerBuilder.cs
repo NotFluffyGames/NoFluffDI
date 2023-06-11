@@ -3,13 +3,15 @@ using System.Collections.Generic;
 
 namespace NotFluffy.NoFluffDI
 {
-    public abstract class BaseContainerBuilder : IContainerBuilder
+    public abstract class BaseContainerBuilder : IContainerBuilder, IDisposable
     {
+        private bool _disposed;
+        
         protected List<IResolverFactory> resolvers;
-        protected Dictionary<Type, ConverterBind> implicitConverters;
         protected object Context { get; }
         protected IReadOnlyContainer Parent { get; }
         protected event Action<IReadOnlyContainer> BuildCallback;
+        protected List<Inject> injectables;
 
         protected BaseContainerBuilder(object context = null, IReadOnlyContainer parent = null)
         {
@@ -19,23 +21,25 @@ namespace NotFluffy.NoFluffDI
 
         public IContainerBuilder Add(IResolverFactory resolverFactory)
         {
+            AssertNotDisposed();
+            
             resolvers ??= new List<IResolverFactory>();
             resolvers.Add(resolverFactory);
             return this;
         }
 
-        public IContainerBuilder SetImplicitConverter<TFrom, TTo>(Converter<TFrom, TTo> converter)
+        public IContainerBuilder AddInjectable(Inject injectable)
         {
-            var converterBind = new ConverterBind(typeof(TFrom), ConvertInternal);
-            implicitConverters ??= new Dictionary<Type, ConverterBind>();
-            implicitConverters.Add(typeof(TTo), converterBind);
-
-            object ConvertInternal(object from) => converter((TFrom)from);
+            AssertNotDisposed();
+            
+            injectables ??= new List<Inject>();
             return this;
         }
 
         public IReadOnlyContainer Build()
         {
+            AssertNotDisposed();
+            
             var container = Create(); 
             
             BuildCallback?.Invoke(container);
@@ -46,9 +50,33 @@ namespace NotFluffy.NoFluffDI
 
         protected abstract IReadOnlyContainer Create();
 
-        public void RegisterBuildCallback(Action<IReadOnlyContainer> callback)
+        public IContainerBuilder RegisterBuildCallback(Action<IReadOnlyContainer> callback)
         {
+            AssertNotDisposed();
+            
             BuildCallback += callback;
+
+            return this;
+        }
+
+        public abstract IContainerBuilder RegisterInjectCallback(Action<IReadOnlyContainer> callback);
+
+        public virtual void Dispose()
+        {
+            if(_disposed)
+                return;
+            
+            _disposed = true;
+            
+            resolvers = null;
+            BuildCallback = null;
+            injectables = null;
+        }
+        
+        protected void AssertNotDisposed()
+        {
+            if(_disposed)
+                throw new ObjectDisposedException(nameof(ContainerBuilder));
         }
     }
 }

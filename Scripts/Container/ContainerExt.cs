@@ -9,16 +9,25 @@ namespace NotFluffy.NoFluffDI
 {
     public static class ContainerExt
     {
-        public static void Add(this IContainerBuilder builder, params IResolverFactory[] resolverFactories)
+        public static IContainerBuilder Add(this IContainerBuilder builder, params IResolverFactory[] resolverFactories)
         {
             foreach (var resolverFactory in resolverFactories) 
                 builder.Add(resolverFactory);
+            
+            return builder;
         }
         
-        public static void Add(this IContainerBuilder builder, IEnumerable<IResolverFactory> resolverFactories)
+        public static IContainerBuilder Add(this IContainerBuilder builder, IEnumerable<IResolverFactory> resolverFactories)
         {
             foreach (var resolverFactory in resolverFactories) 
                 builder.Add(resolverFactory);
+
+            return builder;
+        }
+
+        public static IContainerBuilder AddInjectable(this IContainerBuilder builder, IInjectable injectable)
+        {
+            return builder.AddInjectable(injectable.Inject);
         }
 
         public static IReadOnlyContainer CreateContainer(this IInstallable installable, object context= null, IReadOnlyContainer parent = null)

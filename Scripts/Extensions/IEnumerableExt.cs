@@ -1,4 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
+
+// ReSharper disable UnusedMethodReturnValue.Global
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedType.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace NotFluffy
 {
@@ -20,6 +26,11 @@ namespace NotFluffy
             foreach (var item in collection)
                 if (selector(item, out var result))
                     yield return result;
+        }
+        
+        public static IEnumerable<T> Except<T>(this IEnumerable<T> enumerable, T except)
+        {
+            return enumerable.Where(element => !Equals(element, except));
         }
     }
 }

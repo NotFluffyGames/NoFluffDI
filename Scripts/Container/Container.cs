@@ -10,42 +10,94 @@ namespace NotFluffy.NoFluffDI
 {
     public class ContainerBuilder : BaseContainerBuilder
     {
-        public ContainerBuilder(object context = null, IReadOnlyContainer parent = null) 
+        private event Action<IReadOnlyContainer> _onInjectionComplete;
+        
+        public ContainerBuilder(object context = null, IReadOnlyContainer parent = null)
             : base(context, parent)
         {
         }
 
         protected override IReadOnlyContainer Create()
         {
-            return new Container(
+            AssertNotDisposed();
+                
+            var injectionCompletionSource = new UniTaskCompletionSource();
+
+            var container = new Container(
                 Context,
                 resolvers,
+                () => injectionCompletionSource.Task,
                 Parent);
+            
+            Dispose();
+            
+            var injectContext = new InjectContext(container);
+            
+            _ = UniTask.WhenAll(injectables.SelectWhile<Inject, UniTask>(TryInject)).ContinueWith(OnComplete);
+            
+            return container;
+
+            bool TryInject(Inject inject, out UniTask task)
+            {
+                if (inject == null)
+                {
+                    task = default;
+                    return false;
+                }
+
+                task = inject(injectContext);
+                return true;
+            }
+
+            void OnComplete()
+            {
+                injectionCompletionSource.TrySetResult();
+                
+                injectContext.InjectionComplete();
+                
+                _onInjectionComplete?.Invoke(container);
+            }
+
         }
-        
+
+        public override IContainerBuilder RegisterInjectCallback(Action<IReadOnlyContainer> callback)
+        {
+            AssertNotDisposed();
+            
+            _onInjectionComplete += callback;
+
+            return this;
+        }
+
+
         private class Container : IReadOnlyContainer, IReactiveDisposable
         {
             public IReadOnlyContainer Parent { get; private set; }
 
             public object Context { get; }
-            
+
             public IReadOnlyDictionary<ResolverID, IResolver> Resolvers { get; }
 
             private bool disposed;
+
+            private readonly Func<UniTask> injectionTaskSource;
+            public UniTask InjectionTask => injectionTaskSource();
 
             private readonly Subject<Unit> onDispose = new();
             public IObservable<Unit> OnDispose => onDispose;
 
             public Container(
-                object context, 
+                object context,
                 IEnumerable<IResolverFactory> resolvers,
+                Func<UniTask> injectionTask,
                 IReadOnlyContainer parent = null)
             {
                 Context = context;
+                injectionTaskSource = injectionTask;
                 Parent = parent;
 
                 Parent?.OnDispose.Subscribe(Dispose);
-                
+
                 Resolvers = BuildResolvers(resolvers);
             }
 
@@ -55,7 +107,7 @@ namespace NotFluffy.NoFluffDI
                     return;
 
                 disposed = true;
-                
+
                 Parent = null;
                 onDispose.OnNext(new Unit());
             }
@@ -82,14 +134,15 @@ namespace NotFluffy.NoFluffDI
 
                 return false;
             }
-            
+
+
             private IReadOnlyDictionary<ResolverID, IResolver> BuildResolvers(IEnumerable<IResolverFactory> factories)
             {
                 if (factories == null)
                     return null;
-                
+
                 var resolvers = new Dictionary<ResolverID, IResolver>();
-                
+
                 var toResolve = new Queue<IResolver>();
                 foreach (var factory in factories)
                 {
@@ -141,7 +194,7 @@ namespace NotFluffy.NoFluffDI
                         c = default;
                         return false;
                     }
-                    
+
                     if (node.Resolvers.TryGetValue(resolverId, out var r))
                     {
                         c = new ResolutionContext(r, node, this);
@@ -162,6 +215,29 @@ namespace NotFluffy.NoFluffDI
                     yield return current;
                     current = current.Parent;
                 }
+            }
+        }
+        
+        private class InjectContext : IInjectContext
+        {
+            public IReadOnlyContainer Container { get; }
+
+            private event Action OnComplete;
+
+            internal void InjectionComplete()
+            {
+                OnComplete?.Invoke();
+                OnComplete = null;
+            }
+        
+            public void RegisterInjectCallback(Action callback)
+            {
+                OnComplete += callback;
+            }
+
+            public InjectContext(IReadOnlyContainer container)
+            {
+                Container = container;
             }
         }
     }

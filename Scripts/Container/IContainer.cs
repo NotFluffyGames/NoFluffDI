@@ -3,9 +3,16 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using NotFluffy.NoFluffRx;
 
+// ReSharper disable UnusedMethodReturnValue.Global
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedType.Global
+// ReSharper disable MemberCanBePrivate.Global
+
 namespace NotFluffy.NoFluffDI
 {
 
+    public delegate UniTask Inject(IInjectContext context);
+    
     public interface IContainerBuilder
     {
         /// <summary>
@@ -13,19 +20,20 @@ namespace NotFluffy.NoFluffDI
         /// </summary>
         /// <param name="resolverFactory"></param>
         IContainerBuilder Add(IResolverFactory resolverFactory);
-        IContainerBuilder SetImplicitConverter<TFrom, TTo>(Converter<TFrom, TTo> converter);
+        
+        IContainerBuilder AddInjectable(Inject injectable);
 
         IReadOnlyContainer Build();
-
-        void RegisterBuildCallback(Action<IReadOnlyContainer> container);
+        
+        IContainerBuilder RegisterBuildCallback(Action<IReadOnlyContainer> container);
+        
+        IContainerBuilder RegisterInjectCallback(Action<IReadOnlyContainer> container);
     }
 
     /// <summary>
     /// Each container is a node in a tree of containers, each holds his local resolvers
     /// </summary>
-    public interface IReadOnlyContainer : 
-        //ITreeNode<IReadOnlyContainer>,
-        IReadOnlyReactiveDisposable
+    public interface IReadOnlyContainer : IReadOnlyReactiveDisposable
     {
         IReadOnlyContainer Parent { get; }
         /// <summary>
@@ -53,5 +61,10 @@ namespace NotFluffy.NoFluffDI
         /// </summary>
         /// <returns>Whether the type can resolved</returns>
         bool Contains(Type contract, object id = null);
+        
+        /// <summary>
+        /// Finishes when all injections declared in the ContainerBuilder complete injection
+        /// </summary>
+        UniTask InjectionTask { get; }
     }
 }
