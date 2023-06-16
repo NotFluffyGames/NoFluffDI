@@ -153,7 +153,7 @@ namespace NotFluffy.NoFluffDI.Editor.DebuggingWindow
         {
             var root = new DebuggerWindowTreeElement("Root", -1, ++_id, EditorGUIUtility.IconContent(ContainerIconPath).image, null, null);
 
-            if(ProjectContext.IsInitialized)
+            if(ProjectContext.Instance != null)
                 BuildDataRecursively(root, ProjectContext.Instance);
 
             var list = new List<DebuggerWindowTreeElement>();

@@ -6,8 +6,8 @@ namespace NotFluffy.NoFluffDI
 {
     public class SingleResolver : TransientResolver
     {
-        public SingleResolver(IEnumerable<ResolverID> ids, Func<IResolutionContext, UniTask<object>> method)
-            : base(ids, method)
+        public SingleResolver(IEnumerable<ResolverID> ids, Func<IResolutionContext, UniTask<object>> method, IEnumerable<PostResolveAction> postResolveActions)
+            : base(ids, method, postResolveActions)
         {
 
         }

@@ -1,52 +1,55 @@
+using System;
 using UnityEngine;
+
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace NotFluffy.NoFluffDI
 {
-    public class ProjectContext : ScriptableObject
+    public sealed class ProjectContext : ScriptableObject
     {
         public const string ProjectContextPath = "ProjectContext";
-        public static IReadOnlyContainer Instance;
+        
+        private static IReadOnlyContainer _instance;
+        public static IReadOnlyContainer Instance => _instance ??= LoadContainer();
+
+        private static IReadOnlyContainer LoadContainer()
+        {
+            var projectContext = Resources.Load<ProjectContext>(ProjectContextPath);
+
+            var buildResult = projectContext._installers.BuildContainer("ProjectContainer");
+            
+            _containerDisposable = buildResult.ContainerDisposable;
+
+            Application.quitting += ApplicationOnQuitting;
+
+            return buildResult.Container;
+        }
+
+        private static IDisposable _containerDisposable;
+        
+        [SerializeField] private InstallersCollection _installers;
+
+
+        private static void ApplicationOnQuitting()
+        {
+            DisposeProjectContext();
+        }
+
+        public static void DisposeProjectContext()
+        {
+            _instance = null;
+            _containerDisposable?.Dispose();
+            _containerDisposable = null;
+        }
 
 #if UNITY_EDITOR
         //For projects with Domain reloading disabled
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetForDomainReloadingDisabled()
         {
-            //Instance.Dispose();
-            Instance = null;
+            DisposeProjectContext();
         }
 #endif
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
-        private static void BeforeAwakeOfFirstSceneOnly() => ValidateInitialized();
-
-        public static void ValidateInitialized()
-        {
-            if (IsInitialized)
-                return;
-
-            if (ResourcesUtilities.TryLoad<ProjectContext>(ProjectContextPath, out var projectContext))
-                projectContext.Init();
-
-            IsInitialized = true;
-        }
-
-        [SerializeField]
-        protected InstallersCollection installers;
-        
-        public static bool IsInitialized { get; private set; }
-
-        private void Init()
-        {
-            Instance = installers.CreateContainer("ProjectContainer");
-            
-            Application.quitting += ApplicationOnQuitting;
-        }
-
-        private static void ApplicationOnQuitting()
-        {
-            //Instance.Dispose();
-            Instance = null;
-        }
     }
 }

@@ -12,8 +12,14 @@ namespace NotFluffy.NoFluffDI
 {
 
     public delegate UniTask Inject(IInjectContext context);
+
+    public interface IContainerBuildResult
+    {
+        IReadOnlyContainer Container { get; }
+        IDisposable ContainerDisposable { get; }
+    }
     
-    public interface IContainerBuilder
+    public interface IContainerBuilder : IDisposable
     {
         /// <summary>
         /// Installs new binds into the container
@@ -23,7 +29,7 @@ namespace NotFluffy.NoFluffDI
         
         IContainerBuilder AddInjectable(Inject injectable);
 
-        IReadOnlyContainer Build();
+        IContainerBuildResult Build();
         
         IContainerBuilder RegisterBuildCallback(Action<IReadOnlyContainer> container);
         

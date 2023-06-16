@@ -17,7 +17,7 @@ namespace NotFluffy.NoFluffDI
         {
         }
 
-        protected override IReadOnlyContainer Create()
+        protected override IContainerBuildResult Create()
         {
             AssertNotDisposed();
                 
@@ -28,14 +28,15 @@ namespace NotFluffy.NoFluffDI
                 resolvers,
                 () => injectionCompletionSource.Task,
                 Parent);
-            
-            Dispose();
-            
+
             var injectContext = new InjectContext(container);
             
-            _ = UniTask.WhenAll(injectables.SelectWhile<Inject, UniTask>(TryInject)).ContinueWith(OnComplete);
-            
-            return container;
+            if(injectables is { Count: > 0 })
+                _ = UniTask.WhenAll(injectables.SelectWhile<Inject, UniTask>(TryInject)).ContinueWith(OnComplete);
+            else
+                OnComplete();
+
+            return new ContainerBuildResult(container, container);
 
             bool TryInject(Inject inject, out UniTask task)
             {
@@ -168,13 +169,14 @@ namespace NotFluffy.NoFluffDI
             public async UniTask<object> Resolve(Type contract, object id = null)
             {
                 var resolverID = new ResolverID(contract, id);
+                
                 //Try resolve using a direct resolver
                 var ctx = GetResolver(resolverID);
 
-                if (ctx != null)
-                    return await ctx.Resolve();
-
-                throw new NoMatchingResolverException(contract);
+                if (ctx == null)
+                    throw new NoMatchingResolverException(contract);
+                
+                return await ctx.Resolve();
             }
 
             private IResolutionContext GetResolver(Type contract, object id = null)

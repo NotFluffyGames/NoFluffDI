@@ -109,7 +109,7 @@ namespace NotFluffy.NoFluffDI
             if (installable != null)
                 scope.Install(installable);
 
-            return scope.Build().InstantiateFromPrefab(prefab, parent);
+            return scope.Build().Container.InstantiateFromPrefab(prefab, parent);
         }
 
         [UsedImplicitly]

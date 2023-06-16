@@ -12,7 +12,7 @@ namespace NotFluffy.NoFluffDI.Benchmark
         private void Start()
         {
             _builder.Add(Resolvers());
-            _container = _builder.Build();
+            _container = _builder.Build().Container;
         }
 
         private static IEnumerable<IResolverFactory> Resolvers()

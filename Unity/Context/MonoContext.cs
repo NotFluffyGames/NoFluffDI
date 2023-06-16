@@ -23,13 +23,9 @@ namespace NotFluffy.NoFluffDI
             void Callback(IContainerBuilder builder)
             {
                 builder.Install(installers);
-                _container = builder.Build();
+                var buildResult = builder.Build();
+                _container = buildResult.Container;
             }
-        }
-
-        protected virtual void OnDestroy()
-        {
-            //_disposeSource?.Dispose();
         }
     }
 }

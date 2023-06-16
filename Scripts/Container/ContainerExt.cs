@@ -30,23 +30,34 @@ namespace NotFluffy.NoFluffDI
             return builder.AddInjectable(injectable.Inject);
         }
 
-        public static IReadOnlyContainer CreateContainer(this IInstallable installable, object context= null, IReadOnlyContainer parent = null)
+        public static IContainerBuilder CreateBuilder(
+            this IInstallable installable,
+            object context = null,
+            IReadOnlyContainer parent = null)
         {
             var builder = new ContainerBuilder(context, parent);
             builder.Install(installable);
-            return builder.Build();
+            return builder;
+        }
+
+        public static IContainerBuildResult BuildContainer(
+            this IInstallable installable,
+            object context = null,
+            IReadOnlyContainer parent = null)
+        {
+            return installable.CreateBuilder(context, parent).Build();
         }
         
-        public static IReadOnlyContainer CreateContainer(this IResolverFactory resolverFactory, object context = null, IReadOnlyContainer parent = null)
+        public static IContainerBuildResult BuildContainer(this IResolverFactory resolverFactory, object context = null, IReadOnlyContainer parent = null)
         {
-            var builder = new ContainerBuilder(context, parent);
+            using var builder = new ContainerBuilder(context, parent);
             builder.Add(resolverFactory);
             return builder.Build();
         }
         
-        public static IReadOnlyContainer CreateContainer(this IEnumerable<IResolverFactory> resolverFactories, object context= null, IReadOnlyContainer parent = null)
+        public static IContainerBuildResult BuildContainer(this IEnumerable<IResolverFactory> resolverFactories, object context= null, IReadOnlyContainer parent = null)
         {
-            var builder = new ContainerBuilder(context, parent);
+            using var builder = new ContainerBuilder(context, parent);
             builder.Add(resolverFactories);
             return builder.Build();
         }
@@ -101,9 +112,9 @@ namespace NotFluffy.NoFluffDI
 
         public static IContainerBuilder Scope(this IReadOnlyContainer container, string containerName, IInstallable installable)
         {
-            var newContainer = container.Scope(containerName);
-            newContainer.Install(installable);
-            return newContainer;
+            using var builder = container.Scope(containerName);
+            builder.Install(installable);
+            return builder;
         }
     }
 }

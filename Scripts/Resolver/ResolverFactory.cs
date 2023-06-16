@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+// ReSharper disable UnusedMember.Global
 
 namespace NotFluffy.NoFluffDI
 {
@@ -11,6 +12,7 @@ namespace NotFluffy.NoFluffDI
         public bool IsLazy { get; private set; } = true;
         private bool Transient;
         private readonly List<Type> types = new();
+        private List<PostResolveAction> postResolveActions;
         private object ID { get; set; }
 
         public ResolverFactory(Type type, Func<IResolutionContext, UniTask<object>> method, IReadOnlyCollection<Type> extraTypes)
@@ -29,10 +31,9 @@ namespace NotFluffy.NoFluffDI
         public IResolver Create()
         {
             var ids = types.Select(t => new ResolverID(t, ID));
-            if (Transient)
-                return new TransientResolver(ids, method);
-            else
-                return new SingleResolver(ids, method);
+            return Transient
+                ? new TransientResolver(ids, method, postResolveActions)
+                : new SingleResolver(ids, method, postResolveActions);
         }
 
         public ResolverFactory AsSingle()
@@ -61,6 +62,17 @@ namespace NotFluffy.NoFluffDI
         public ResolverFactory WithID(object id)
         {
             ID = id;
+            return this;
+        }
+
+        /// <summary>
+        /// Invoked after each new instance is created
+        /// </summary>
+        public ResolverFactory AddPostResolveAction(PostResolveAction action)
+        {
+            postResolveActions ??= new List<PostResolveAction>();
+            postResolveActions.Add(action);
+
             return this;
         }
     }

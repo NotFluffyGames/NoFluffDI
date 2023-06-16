@@ -62,63 +62,74 @@ namespace NotFluffy.NoFluffDI.Tests
             yield return Resolve
                 .FromInstance(ContainerTestsConsts.CORRECT_INPUT)
                 .WithID(id)
-                .CreateContainer("direct");
+                .BuildContainer("direct")
+                .Container;
 
             var parent = Resolve
                 .FromInstance(ContainerTestsConsts.CORRECT_INPUT)
                 .WithID(id)
-                .CreateContainer("parentWithCorrectInstances");
+                .BuildContainer("parentWithCorrectInstances")
+                .Container;
 
             yield return parent
                 .Scope("childOfParentWithCorrectInstances")
-                .Build();
+                .Build()
+                .Container;
 
-            parent = new ContainerBuilder("parent").Build();
+            parent = new ContainerBuilder("parent").Build().Container;
 
             yield return Resolve
                 .FromInstance(ContainerTestsConsts.CORRECT_INPUT)
                 .WithID(id)
-                .CreateContainer("childWithInstances", parent);
+                .BuildContainer("childWithInstances", parent)
+                .Container;
 
             parent = Resolve
                 .FromInstance(ContainerTestsConsts.WRONG_INPUT)
                 .WithID(id)
-                .CreateContainer("parentWithWrongInstances");
+                .BuildContainer("parentWithWrongInstances")
+                .Container;
 
             yield return Resolve
                 .FromInstance(ContainerTestsConsts.CORRECT_INPUT)
                 .WithID(id)
-                .CreateContainer("childOfParentWithWrongInstances", parent);
+                .BuildContainer("childOfParentWithWrongInstances", parent)
+                .Container;
 
             //FromMethod
             yield return Resolve
                 .FromMethod<string>(() => new(ContainerTestsConsts.CORRECT_INPUT))
                 .WithID(id)
-                .CreateContainer("direct");
+                .BuildContainer("direct")
+                .Container;
 
             parent = Resolve
                 .FromMethod<string>(() => new(ContainerTestsConsts.CORRECT_INPUT))
                 .WithID(id)
-                .CreateContainer("parentWithCorrectInstances");
+                .BuildContainer("parentWithCorrectInstances")
+                .Container;
 
-            yield return parent.Scope("childOfParentWithCorrectInstances").Build();
+            yield return parent.Scope("childOfParentWithCorrectInstances").Build().Container;
 
-            parent = new ContainerBuilder("parent").Build();
+            parent = new ContainerBuilder("parent").Build().Container;
             
             yield return Resolve
                 .FromMethod<string>(() => new(ContainerTestsConsts.CORRECT_INPUT))
                 .WithID(id)
-                .CreateContainer("childWithInstances", parent);
+                .BuildContainer("childWithInstances", parent)
+                .Container;
 
             parent = Resolve
                 .FromMethod<string>(() => new(ContainerTestsConsts.WRONG_INPUT))
                 .WithID(id)
-                .CreateContainer("parentWithWrongInstances");
+                .BuildContainer("parentWithWrongInstances")
+                .Container;
 
             yield return Resolve
                 .FromMethod<string>(() => new(ContainerTestsConsts.CORRECT_INPUT))
                 .WithID(id)
-                .CreateContainer("childOfParentWithWrongInstances", parent);
+                .BuildContainer("childOfParentWithWrongInstances", parent)
+                .Container;
         }
 
 
@@ -208,7 +219,8 @@ namespace NotFluffy.NoFluffDI.Tests
             var container = Resolve
                 .FromNew<TypeWithState>()
                 .AsTransient()
-                .CreateContainer("container");
+                .BuildContainer("container")
+                .Container;
 
 
             TypeWithState result1 = default;
@@ -227,7 +239,8 @@ namespace NotFluffy.NoFluffDI.Tests
             var container = Resolve
                 .FromNew<TypeWithState>()
                 .AsSingle()
-                .CreateContainer("container");
+                .BuildContainer("container")
+                .Container;
 
             TypeWithState result = null;
             yield return container.Resolve<TypeWithState>().ToCoroutine(r => result = r);
@@ -240,7 +253,8 @@ namespace NotFluffy.NoFluffDI.Tests
         {
             var container = Resolve
                 .FromMethodAsync(Create)
-                .CreateContainer("container");
+                .BuildContainer("container")
+                .Container;
 
             TypeWithState result = default;
 
@@ -256,11 +270,11 @@ namespace NotFluffy.NoFluffDI.Tests
         [UnityTest]
         public IEnumerator Resolve_ResolveFromInsideResolve_CorrectlyResolve()
         {
-            var builder = new ContainerBuilder("container");
+            using var builder = new ContainerBuilder("container");
             builder.Add(Resolve.FromInstance(ContainerTestsConsts.CORRECT_INPUT));
             builder.Add(Resolve.FromMethodAsync(async resolver => new TypeWithState { State = await resolver.Resolve<string>() }).AsTransient());
 
-            var container = builder.Build();
+            var container = builder.Build().Container;
             TypeWithState output = default;
             yield return container.Resolve<TypeWithState>().ToCoroutine(r => output = r);
 
@@ -272,7 +286,7 @@ namespace NotFluffy.NoFluffDI.Tests
         public void Resolve_InstallAsLazyAndDoesntResolve_ShouldNotResolve()
         {
             var wasResolved = false;
-            var builder = new ContainerBuilder("");
+            using var builder = new ContainerBuilder("");
             builder.Add(Resolve.FromMethodAsync(GetValue).Lazy());
 
             builder.Build();
@@ -290,10 +304,10 @@ namespace NotFluffy.NoFluffDI.Tests
         public IEnumerator Resolve_InstallAsLazyAndResolve_ShouldResolve()
         {
             var wasResolved = false;
-            var builder = new ContainerBuilder("");
+            using var builder = new ContainerBuilder("");
             builder.Add(Resolve.FromMethodAsync(GetValue).Lazy());
 
-            var container = builder.Build();
+            var container = builder.Build().Container;
             yield return container.Resolve<int>().ToCoroutine();
 
             Assert.True(wasResolved);
@@ -309,7 +323,7 @@ namespace NotFluffy.NoFluffDI.Tests
         public void Resolve_InstallAsNonLazyAndDoesntResolve_ShouldResolve()
         {
             var wasResolved = false;
-            var builder = new ContainerBuilder("");
+            using var builder = new ContainerBuilder("");
             builder.Add(Resolve.FromMethodAsync(GetValue).NonLazy());
 
             builder.Build();

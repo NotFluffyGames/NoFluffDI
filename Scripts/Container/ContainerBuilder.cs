@@ -33,22 +33,25 @@ namespace NotFluffy.NoFluffDI
             AssertNotDisposed();
             
             injectables ??= new List<Inject>();
+            
+            injectables.Add(injectable);
+            
             return this;
         }
 
-        public IReadOnlyContainer Build()
+        public IContainerBuildResult Build()
         {
             AssertNotDisposed();
             
             var container = Create(); 
             
-            BuildCallback?.Invoke(container);
+            BuildCallback?.Invoke(container.Container);
             BuildCallback = null;
             
             return container;
         }
 
-        protected abstract IReadOnlyContainer Create();
+        protected abstract IContainerBuildResult Create();
 
         public IContainerBuilder RegisterBuildCallback(Action<IReadOnlyContainer> callback)
         {
