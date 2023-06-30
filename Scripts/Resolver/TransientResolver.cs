@@ -7,13 +7,13 @@ namespace NotFluffy.NoFluffDI
 {
     public class TransientResolver : IResolver
     {
-        private readonly Func<IResolutionContext, UniTask<object>> method;
+        private readonly Func<IResolutionContext, object> method;
         private readonly IReadOnlyList<PostResolveAction> postResolveActions;
 
         public IEnumerable<ResolverID> IDs { get; }
         public int Resolutions { get; private set; }
         
-        public TransientResolver(IEnumerable<ResolverID> IDs, Func<IResolutionContext, UniTask<object>> method, IEnumerable<PostResolveAction> postResolveActions)
+        public TransientResolver(IEnumerable<ResolverID> IDs, Func<IResolutionContext, object> method, IEnumerable<PostResolveAction> postResolveActions)
         {
             this.method = method ?? throw new ArgumentNullException(nameof(method));
             this.IDs = IDs;
@@ -21,34 +21,27 @@ namespace NotFluffy.NoFluffDI
             this.postResolveActions = postResolveActions?.ToArray();
         }
 
-        public virtual async UniTask<object> Resolve(IResolutionContext context)
+        public UniTask<object> ResolveAsync(IResolutionContext context)
         {
-            var resolved = await method(context);
-            await HandlePostResolveActions(resolved, context);
+            return UniTask.FromResult(Resolve(context));
+        }
+
+        public virtual object Resolve(IResolutionContext context)
+        {
+            var resolved = method(context);
+            HandlePostResolveActions(resolved, context);
             ++Resolutions;
 
             return resolved;
         }
 
-        private UniTask HandlePostResolveActions(object resolved, IResolutionContext context)
+        private void HandlePostResolveActions(object resolved, IResolutionContext context)
         {
-            if (resolved == null || postResolveActions == null || postResolveActions.Count == 0)
-                return UniTask.CompletedTask;
-            
-            var tasks = postResolveActions.SelectWhile<PostResolveAction, UniTask>(TryInvoke);
-            return UniTask.WhenAll(tasks);
+            if (postResolveActions == null || postResolveActions.Count == 0)
+                return;
 
-            bool TryInvoke(PostResolveAction action, out UniTask task)
-            {
-                if (action == null)
-                {
-                    task = default;
-                    return false;
-                }
-
-                task = action(resolved, context);
-                return true;
-            }
+            foreach (var action in postResolveActions)
+                action?.Invoke(resolved, context);
         }
     }
 }

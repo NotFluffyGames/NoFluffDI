@@ -1,20 +1,21 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+// ReSharper disable UnusedMember.Global
 
 namespace NotFluffy.NoFluffDI
 {
-    public class ResolverFactory : IResolverFactory
+    public class AsyncResolverFactory : IResolverFactory
     {
-        private readonly Func<IResolutionContext, object> method;
+        private readonly Func<IResolutionContext, UniTask<object>> method;
         public bool IsLazy { get; private set; } = true;
         private bool Transient;
         private readonly List<Type> types = new();
-        private List<PostResolveAction> postResolveActions;
+        private List<AsyncPostResolveAction> postResolveActions;
         private object ID { get; set; }
 
-        public ResolverFactory(Type type, Func<IResolutionContext, object> method, IReadOnlyCollection<Type> extraTypes)
+        public AsyncResolverFactory(Type type, Func<IResolutionContext, UniTask<object>> method, IReadOnlyCollection<Type> extraTypes)
         {
             if(type == null)
                 throw new ArgumentNullException(nameof(type));
@@ -31,34 +32,34 @@ namespace NotFluffy.NoFluffDI
         {
             var ids = types.Select(t => new ResolverID(t, ID));
             return Transient
-                ? new TransientResolver(ids, method, postResolveActions)
-                : new SingleResolver(ids, method, postResolveActions);
+                ? new AsyncTransientResolver(ids, method, postResolveActions)
+                : new AsyncSingleResolver(ids, method, postResolveActions);
         }
 
-        public ResolverFactory AsSingle()
+        public AsyncResolverFactory AsSingle()
         {
             Transient = false;
             return this;
         }
 
-        public ResolverFactory AsTransient()
+        public AsyncResolverFactory AsTransient()
         {
             Transient = true;
             return this;
         }
 
-        public ResolverFactory NonLazy()
+        public AsyncResolverFactory NonLazy()
         {
             IsLazy = false;
             return this;
         }
 
-        public ResolverFactory Lazy()
+        public AsyncResolverFactory Lazy()
         {
             IsLazy = true;
             return this;
         }
-        public ResolverFactory WithID(object id)
+        public AsyncResolverFactory WithID(object id)
         {
             ID = id;
             return this;
@@ -67,9 +68,9 @@ namespace NotFluffy.NoFluffDI
         /// <summary>
         /// Invoked after each new instance is created
         /// </summary>
-        public ResolverFactory AddPostResolveAction(PostResolveAction action)
+        public AsyncResolverFactory AddPostResolveAction(AsyncPostResolveAction action)
         {
-            postResolveActions ??= new List<PostResolveAction>();
+            postResolveActions ??= new List<AsyncPostResolveAction>();
             postResolveActions.Add(action);
 
             return this;

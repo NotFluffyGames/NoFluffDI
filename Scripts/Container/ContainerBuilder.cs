@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NotFluffy.NoFluffDI
 {
-    public abstract class BaseContainerBuilder : IContainerBuilder, IDisposable
+    public abstract class BaseContainerBuilder : IContainerBuilder
     {
         private bool _disposed;
         

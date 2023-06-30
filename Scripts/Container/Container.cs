@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reactive;
 using System.Reactive.Subjects;
 using Cysharp.Threading.Tasks;
@@ -77,7 +76,7 @@ namespace NotFluffy.NoFluffDI
 
             public object Context { get; }
 
-            public IReadOnlyDictionary<ResolverID, IResolver> Resolvers { get; }
+            public IReadOnlyDictionary<ResolverID, IAsyncResolver> Resolvers { get; }
 
             private bool disposed;
 
@@ -128,23 +127,24 @@ namespace NotFluffy.NoFluffDI
                 while (typesToCheck.Count > 0)
                 {
                     var type = typesToCheck.Dequeue();
+
+                    var resolverID = new ResolverID(type, id);
                     //First look for a direct resolver
-                    if (GetResolver(type, id) != null)
+                    if (GetResolver(resolverID, out _) != null)
                         return true;
                 }
 
                 return false;
             }
 
-
-            private IReadOnlyDictionary<ResolverID, IResolver> BuildResolvers(IEnumerable<IResolverFactory> factories)
+            private IReadOnlyDictionary<ResolverID, IAsyncResolver> BuildResolvers(IEnumerable<IResolverFactory> factories)
             {
                 if (factories == null)
                     return null;
+                
+                var resolvers = new Dictionary<ResolverID, IAsyncResolver>();
 
-                var resolvers = new Dictionary<ResolverID, IResolver>();
-
-                var toResolve = new Queue<IResolver>();
+                var toResolve = new Queue<IAsyncResolver>();
                 foreach (var factory in factories)
                 {
                     var resolver = factory.Create();
@@ -159,51 +159,67 @@ namespace NotFluffy.NoFluffDI
                 while (toResolve.Count > 0)
                 {
                     var resolver = toResolve.Dequeue();
-                    var ctx = new ResolutionContext(resolver, this, this);
-                    resolver.Resolve(ctx);
+                    var ctx = new ResolutionContext(this, this);
+                    resolver.ResolveAsync(ctx);
                 }
 
                 return resolvers;
             }
-
-            public async UniTask<object> Resolve(Type contract, object id = null)
+            
+            public object Resolve(Type contract, object id = null)
             {
                 var resolverID = new ResolverID(contract, id);
                 
-                //Try resolve using a direct resolver
-                var ctx = GetResolver(resolverID);
+                var asyncResolver = GetResolver(resolverID, out var sourceContainer);
 
-                if (ctx == null)
+                if (asyncResolver is not IResolver resolver)
                     throw new NoMatchingResolverException(contract);
                 
-                return await ctx.Resolve();
+                return resolver.Resolve(new ResolutionContext(this, sourceContainer));
+            }
+            
+            public async UniTask<object> ResolveAsync(Type contract, object id = null)
+            {
+                var resolverID = new ResolverID(contract, id);
+                
+                var resolver = GetResolver(resolverID, out var sourceContainer);
+
+                if (resolver == null)
+                    throw new NoMatchingResolverException(contract);
+                
+                return await resolver.ResolveAsync(new ResolutionContext(this, sourceContainer));
             }
 
-            private IResolutionContext GetResolver(Type contract, object id = null)
-                => GetResolver(new ResolverID(contract, id));
-
-            private IResolutionContext GetResolver(ResolverID resolverId)
+            private IAsyncResolver GetResolver(ResolverID resolverId, out IReadOnlyContainer sourceContainer)
             {
                 //Try resolve using a direct resolver
-                return SelfAndParents()
-                    .SelectWhile<IReadOnlyContainer, IResolutionContext>(TryGetResolver)
-                    .FirstOrDefault();
+                foreach (var container in SelfAndParents())
+                {
+                    if (TryGetResolver(container, out var resolver))
+                    {
+                        sourceContainer = container;
+                        return resolver;
+                    }
+                }
 
-                bool TryGetResolver(IReadOnlyContainer node, out IResolutionContext c)
+                sourceContainer = null;
+                return null;
+
+                bool TryGetResolver(IReadOnlyContainer node, out IAsyncResolver resolver)
                 {
                     if (node.Resolvers == null)
                     {
-                        c = default;
+                        resolver = default;
                         return false;
                     }
 
                     if (node.Resolvers.TryGetValue(resolverId, out var r))
                     {
-                        c = new ResolutionContext(r, node, this);
+                        resolver = r;
                         return true;
                     }
 
-                    c = default;
+                    resolver = default;
                     return false;
                 }
             }

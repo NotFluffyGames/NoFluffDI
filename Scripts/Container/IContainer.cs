@@ -52,7 +52,7 @@ namespace NotFluffy.NoFluffDI
         /// <summary>
         /// The local resolvers inside the container, doesn't take into account the resolvers in the parents
         /// </summary>
-        IReadOnlyDictionary<ResolverID, IResolver> Resolvers { get; }
+        IReadOnlyDictionary<ResolverID, IAsyncResolver> Resolvers { get; }
 
         /// <summary>
         /// Resolves an instance from a resolver installed with the same type and id 
@@ -60,7 +60,15 @@ namespace NotFluffy.NoFluffDI
         /// <param name="contract">The type to resolve</param>
         /// <param name="id">If provided, will only use resolvers installed with the same id</param>
         /// <returns>An instance of the type requested</returns>
-        UniTask<object> Resolve(Type contract, object id = null);
+        object Resolve(Type contract, object id = null);
+        
+        /// <summary>
+        /// Resolves an instance from a resolver installed with the same type and id 
+        /// </summary>
+        /// <param name="contract">The type to resolve</param>
+        /// <param name="id">If provided, will only use resolvers installed with the same id</param>
+        /// <returns>An instance of the type requested</returns>
+        UniTask<object> ResolveAsync(Type contract, object id = null);
 
         /// <summary>
         /// Whether the type with the same id can be resolved, either directly or if the id is null then implicitly through a converter.

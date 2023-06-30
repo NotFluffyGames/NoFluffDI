@@ -136,22 +136,43 @@ namespace NotFluffy.NoFluffDI
         [HideInCallstack]
 #endif
         [UsedImplicitly]
-        public static UniTask<T> Resolve<T>(this Scene scene, object id = null)
+        public static T Resolve<T>(this Scene scene, object id = null)
             => scene.GetContainer().Resolve<T>(id);
 
 #if UNITY_2022_2_OR_NEWER
         [HideInCallstack]
 #endif
         [UsedImplicitly]
-        public static UniTask<T> Resolve<T>(this GameObject gameObject, object id = null)
+        public static T Resolve<T>(this GameObject gameObject, object id = null)
             => gameObject.transform.GetContainer().Resolve<T>(id);
 
 #if UNITY_2022_2_OR_NEWER
         [HideInCallstack]
 #endif
         [UsedImplicitly]
-        public static UniTask<T> Resolve<T>(this Component component, object id = null)
+        public static T Resolve<T>(this Component component, object id = null)
             => component.GetContainer().Resolve<T>(id);
+        
+#if UNITY_2022_2_OR_NEWER
+        [HideInCallstack]
+#endif
+        [UsedImplicitly]
+        public static UniTask<T> ResolveAsync<T>(this Scene scene, object id = null)
+                => scene.GetContainer().ResolveAsync<T>(id);
+
+#if UNITY_2022_2_OR_NEWER
+        [HideInCallstack]
+#endif
+        [UsedImplicitly]
+        public static UniTask<T> ResolveAsync<T>(this GameObject gameObject, object id = null)
+                => gameObject.transform.GetContainer().ResolveAsync<T>(id);
+
+#if UNITY_2022_2_OR_NEWER
+        [HideInCallstack]
+#endif
+        [UsedImplicitly]
+        public static UniTask<T> ResolveAsync<T>(this Component component, object id = null)
+                => component.GetContainer().ResolveAsync<T>(id);
 
         #endregion
 

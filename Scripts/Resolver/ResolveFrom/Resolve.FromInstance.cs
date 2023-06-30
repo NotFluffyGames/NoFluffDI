@@ -12,14 +12,14 @@ namespace NotFluffy.NoFluffDI
         {
             return new ResolverFactory(typeof(T), Method, null);
 
-            UniTask<object> Method(IResolutionContext _) => new(instance);
+            object Method(IResolutionContext _) => instance;
         }
 
         public static ResolverFactory FromInstance<T>(T instance, params Type[] extraTypes)
         {
             return new ResolverFactory(typeof(T), Method, extraTypes);
 
-            UniTask<object> Method(IResolutionContext _) => new(instance);
+            object Method(IResolutionContext _) => instance;
         }
     }
 }
