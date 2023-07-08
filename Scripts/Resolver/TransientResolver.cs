@@ -5,23 +5,23 @@ using Cysharp.Threading.Tasks;
 
 namespace NotFluffy.NoFluffDI
 {
-    public class TransientResolver : IResolver
+    public class TransientResolver : BaseTransientResolver, IResolver
     {
         private readonly Func<IResolutionContext, object> method;
         private readonly IReadOnlyList<PostResolveAction> postResolveActions;
 
-        public IEnumerable<ResolverID> IDs { get; }
-        public int Resolutions { get; private set; }
-        
-        public TransientResolver(IEnumerable<ResolverID> IDs, Func<IResolutionContext, object> method, IEnumerable<PostResolveAction> postResolveActions)
+        public TransientResolver(
+            IEnumerable<ResolverID> IDs, 
+            Func<IResolutionContext, object> method, 
+            IEnumerable<PostResolveAction> postResolveActions,
+            IEnumerable<PostDisposeAction> postDisposeActions)
+            : base(IDs, postDisposeActions)
         {
             this.method = method ?? throw new ArgumentNullException(nameof(method));
-            this.IDs = IDs;
-            Resolutions = 0;
             this.postResolveActions = postResolveActions?.ToArray();
         }
 
-        public UniTask<object> ResolveAsync(IResolutionContext context)
+        public override UniTask<object> ResolveAsync(IResolutionContext context)
         {
             return UniTask.FromResult(Resolve(context));
         }
@@ -30,7 +30,10 @@ namespace NotFluffy.NoFluffDI
         {
             var resolved = method(context);
             HandlePostResolveActions(resolved, context);
-            ++Resolutions;
+            
+            AddNewResolvedObject(resolved);
+            
+            IncrementResolveCount();
 
             return resolved;
         }

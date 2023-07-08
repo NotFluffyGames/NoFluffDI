@@ -7,7 +7,7 @@ namespace NotFluffy.NoFluffDI
     {
         private bool _disposed;
         
-        protected List<IResolverFactory> resolvers;
+        protected List<IResolverFactory> resolverFactories;
         protected object Context { get; }
         protected IReadOnlyContainer Parent { get; }
         protected event Action<IReadOnlyContainer> BuildCallback;
@@ -23,8 +23,8 @@ namespace NotFluffy.NoFluffDI
         {
             AssertNotDisposed();
             
-            resolvers ??= new List<IResolverFactory>();
-            resolvers.Add(resolverFactory);
+            resolverFactories ??= new List<IResolverFactory>();
+            resolverFactories.Add(resolverFactory);
             return this;
         }
 
@@ -71,7 +71,7 @@ namespace NotFluffy.NoFluffDI
             
             _disposed = true;
             
-            resolvers = null;
+            resolverFactories = null;
             BuildCallback = null;
             injectables = null;
         }

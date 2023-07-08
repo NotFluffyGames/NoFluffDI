@@ -4,15 +4,11 @@ namespace NotFluffy.NoFluffDI
 {
     public readonly struct ResolutionContext : IResolutionContext
     {
-        public ResolutionContext(
-            IReadOnlyContainer resolverOriginContainer,
-            IReadOnlyContainer currentResolutionContainer)
+        public ResolutionContext(IReadOnlyContainer container)
         {
-            OriginContainer = resolverOriginContainer ?? throw new ArgumentNullException(nameof(resolverOriginContainer));
-            Container = currentResolutionContainer ?? throw new ArgumentNullException(nameof(currentResolutionContainer));
+            Container = container ?? throw new ArgumentNullException(nameof(container));
         }
         
-        public IReadOnlyContainer OriginContainer { get; }
         public IReadOnlyContainer Container { get; }
     }
 }

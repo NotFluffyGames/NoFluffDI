@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
 
 namespace NotFluffy.NoFluffDI
 {
@@ -12,6 +11,7 @@ namespace NotFluffy.NoFluffDI
         private bool Transient;
         private readonly List<Type> types = new();
         private List<PostResolveAction> postResolveActions;
+        private List<PostDisposeAction> postDisposeActions;
         private object ID { get; set; }
 
         public ResolverFactory(Type type, Func<IResolutionContext, object> method, IReadOnlyCollection<Type> extraTypes)
@@ -31,8 +31,8 @@ namespace NotFluffy.NoFluffDI
         {
             var ids = types.Select(t => new ResolverID(t, ID));
             return Transient
-                ? new TransientResolver(ids, method, postResolveActions)
-                : new SingleResolver(ids, method, postResolveActions);
+                ? new TransientResolver(ids, method, postResolveActions, postDisposeActions)
+                : new SingleResolver(ids, method, postResolveActions, postDisposeActions);
         }
 
         public ResolverFactory AsSingle()
@@ -72,6 +72,12 @@ namespace NotFluffy.NoFluffDI
             postResolveActions ??= new List<PostResolveAction>();
             postResolveActions.Add(action);
 
+            return this;
+        }
+        
+        public ResolverFactory AddPostDisposeAction(PostDisposeAction action)
+        {
+            postDisposeActions ??= new List<PostDisposeAction>(1) { action };
             return this;
         }
     }

@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
+using UnityEngine.TestTools;
 
 namespace NotFluffy.NoFluffDI.Tests
 {
@@ -335,6 +337,43 @@ namespace NotFluffy.NoFluffDI.Tests
             {
                 wasResolved = true;
                 return new UniTask<int>(5);
+            }
+        }
+
+        [Test]
+        public void Resolve_RecursivelyResolveAType_ThrowCircularDependencyException()
+        {
+            var container = Resolve
+                .FromMethod(context => context.Resolve<ITestInput>())
+                .BuildContainer("Recursively resolved container")
+                .Container;
+            
+            Assert.Throws<CircularDependencyException>(() => container.Resolve<ITestInput>());
+        }
+        
+        [Test]
+        public void ResolveAsync_TypesDependOnEachOther_ThrowCircularDependencyException()
+        {
+            var container = Resolvers()
+                .BuildContainer("Recursively resolved container")
+                .Container;
+            
+            Assert.Throws<CircularDependencyException>(() => container.Resolve<string>());
+
+            IEnumerable<IResolverFactory> Resolvers()
+            {
+                int IntResolver(IResolutionContext context)
+                {
+                    return int.Parse(context.Resolve<string>());
+                }
+
+                string StringResolver(IResolutionContext context)
+                {
+                    return context.Resolve<int>().ToString();
+                }
+
+                yield return Resolve.FromMethod(IntResolver);
+                yield return Resolve.FromMethod(StringResolver);
             }
         }
     }

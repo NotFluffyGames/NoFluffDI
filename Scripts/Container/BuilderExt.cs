@@ -72,6 +72,5 @@ namespace NotFluffy.NoFluffDI
             installable?.Invoke(builder);
             return builder;
         }
-        
     }
 }

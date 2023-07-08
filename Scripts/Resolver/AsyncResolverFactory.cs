@@ -13,6 +13,7 @@ namespace NotFluffy.NoFluffDI
         private bool Transient;
         private readonly List<Type> types = new();
         private List<AsyncPostResolveAction> postResolveActions;
+        private List<PostDisposeAction> postDisposeActions;
         private object ID { get; set; }
 
         public AsyncResolverFactory(Type type, Func<IResolutionContext, UniTask<object>> method, IReadOnlyCollection<Type> extraTypes)
@@ -32,8 +33,8 @@ namespace NotFluffy.NoFluffDI
         {
             var ids = types.Select(t => new ResolverID(t, ID));
             return Transient
-                ? new AsyncTransientResolver(ids, method, postResolveActions)
-                : new AsyncSingleResolver(ids, method, postResolveActions);
+                ? new AsyncTransientResolver(ids, method, postResolveActions, postDisposeActions)
+                : new AsyncSingleResolver(ids, method, postResolveActions, postDisposeActions);
         }
 
         public AsyncResolverFactory AsSingle()
@@ -70,9 +71,13 @@ namespace NotFluffy.NoFluffDI
         /// </summary>
         public AsyncResolverFactory AddPostResolveAction(AsyncPostResolveAction action)
         {
-            postResolveActions ??= new List<AsyncPostResolveAction>();
-            postResolveActions.Add(action);
+            postResolveActions ??= new List<AsyncPostResolveAction>(1) { action };
+            return this;
+        }
 
+        public AsyncResolverFactory AddPostDisposeAction(PostDisposeAction action)
+        {
+            postDisposeActions ??= new List<PostDisposeAction>(1) { action };
             return this;
         }
     }

@@ -35,13 +35,9 @@ namespace NotFluffy.NoFluffDI
         
         IContainerBuilder RegisterInjectCallback(Action<IReadOnlyContainer> container);
     }
-
-    /// <summary>
-    /// Each container is a node in a tree of containers, each holds his local resolvers
-    /// </summary>
+    
     public interface IReadOnlyContainer : IReadOnlyReactiveDisposable
     {
-        IReadOnlyContainer Parent { get; }
         /// <summary>
         /// The context can be used to identify the container, mainly used for debugging and editor tools
         /// </summary>

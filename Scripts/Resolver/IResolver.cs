@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
@@ -7,19 +8,22 @@ namespace NotFluffy.NoFluffDI
 	/// Invoked after each new instance is created
 	/// </summary>
 	public delegate UniTask AsyncPostResolveAction(object resolved, IResolutionContext context);
+	public delegate void PostDisposeAction(object disposed);
+	
 	public delegate void PostResolveAction(object resolved, IResolutionContext context);
 	
 	public interface IResolutionContext
 	{
-		IReadOnlyContainer OriginContainer { get; }
 		IReadOnlyContainer Container { get; }
 	}
 	
-	public interface IAsyncResolver
+	public interface IAsyncResolver : IDisposable
 	{
-		IEnumerable<ResolverID> IDs { get; }
+		IReadOnlyList<ResolverID> IDs { get; }
 		int Resolutions { get; }
 		UniTask<object> ResolveAsync(IResolutionContext context);
+		
+		IDisposable TakeRefCountToken();
 	}
 	
 	public interface IResolver : IAsyncResolver

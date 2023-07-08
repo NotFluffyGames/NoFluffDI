@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reactive;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Cysharp.Threading.Tasks;
 using NotFluffy.NoFluffRx;
@@ -24,9 +26,9 @@ namespace NotFluffy.NoFluffDI
 
             var container = new Container(
                 Context,
-                resolvers,
-                () => injectionCompletionSource.Task,
-                Parent);
+                Parent,
+                resolverFactories,
+                () => injectionCompletionSource.Task);
 
             var injectContext = new InjectContext(container);
             
@@ -57,7 +59,6 @@ namespace NotFluffy.NoFluffDI
                 
                 _onInjectionComplete?.Invoke(container);
             }
-
         }
 
         public override IContainerBuilder RegisterInjectCallback(Action<IReadOnlyContainer> callback)
@@ -72,14 +73,13 @@ namespace NotFluffy.NoFluffDI
 
         private class Container : IReadOnlyContainer, IReactiveDisposable
         {
-            public IReadOnlyContainer Parent { get; private set; }
-
             public object Context { get; }
 
             public IReadOnlyDictionary<ResolverID, IAsyncResolver> Resolvers { get; }
 
             private bool disposed;
 
+            private readonly HashSet<ResolverID> _currentlyResolved = new();
             private readonly Func<UniTask> injectionTaskSource;
             public UniTask InjectionTask => injectionTaskSource();
 
@@ -88,17 +88,34 @@ namespace NotFluffy.NoFluffDI
 
             public Container(
                 object context,
-                IEnumerable<IResolverFactory> resolvers,
-                Func<UniTask> injectionTask,
-                IReadOnlyContainer parent = null)
+                IReadOnlyContainer parent,
+                IEnumerable<IResolverFactory> factories,
+                Func<UniTask> injectionTask)
             {
                 Context = context;
                 injectionTaskSource = injectionTask;
-                Parent = parent;
+                
+                var resolversDict = parent == null 
+                    ? new Dictionary<ResolverID, IAsyncResolver>()
+                    : new Dictionary<ResolverID, IAsyncResolver>(parent.Resolvers);
+                
+                Resolvers = resolversDict;
 
-                Parent?.OnDispose.Subscribe(Dispose);
+                if(factories != null)
+                    foreach (var resolver in BuildResolvers(factories))
+                        if(resolver is { IDs: not null })
+                            foreach (var id in resolver.IDs)
+                                resolversDict[id] = resolver;
 
-                Resolvers = BuildResolvers(resolvers);
+                var hashset = new HashSet<IAsyncResolver>();
+
+                foreach (var resolver in resolversDict.Values)
+                    hashset.Add(resolver);
+
+                //Disposed on container dispose
+                var composite = new CompositeDisposable(hashset.Count).AddTo(this);
+                foreach (var resolver in hashset)
+                    resolver.TakeRefCountToken().AddTo(composite);
             }
 
             public void Dispose()
@@ -107,9 +124,8 @@ namespace NotFluffy.NoFluffDI
                     return;
 
                 disposed = true;
-
-                Parent = null;
-                onDispose.OnNext(new Unit());
+                
+                onDispose.OnNext();
             }
 
             public IContainerBuilder Scope(object context)
@@ -130,27 +146,27 @@ namespace NotFluffy.NoFluffDI
 
                     var resolverID = new ResolverID(type, id);
                     //First look for a direct resolver
-                    if (GetResolver(resolverID, out _) != null)
+                    if (GetResolver(resolverID) != null)
                         return true;
                 }
 
                 return false;
             }
 
-            private IReadOnlyDictionary<ResolverID, IAsyncResolver> BuildResolvers(IEnumerable<IResolverFactory> factories)
+            private IEnumerable<IAsyncResolver> BuildResolvers(IEnumerable<IResolverFactory> factories)
             {
                 if (factories == null)
-                    return null;
-                
-                var resolvers = new Dictionary<ResolverID, IAsyncResolver>();
+                    yield break;
 
                 var toResolve = new Queue<IAsyncResolver>();
                 foreach (var factory in factories)
                 {
-                    var resolver = factory.Create();
+                    var resolver = factory?.Create();
 
-                    foreach (var id in resolver.IDs)
-                        resolvers[id] = resolver;
+                    if (resolver == null)
+                        continue;
+                    
+                    yield return resolver;
 
                     if (!factory.IsLazy)
                         toResolve.Enqueue(resolver);
@@ -159,80 +175,55 @@ namespace NotFluffy.NoFluffDI
                 while (toResolve.Count > 0)
                 {
                     var resolver = toResolve.Dequeue();
-                    var ctx = new ResolutionContext(this, this);
+                    var ctx = new ResolutionContext(this);
                     resolver.ResolveAsync(ctx);
                 }
-
-                return resolvers;
             }
             
             public object Resolve(Type contract, object id = null)
             {
                 var resolverID = new ResolverID(contract, id);
                 
-                var asyncResolver = GetResolver(resolverID, out var sourceContainer);
+                var asyncResolver = GetResolver(resolverID);
 
                 if (asyncResolver is not IResolver resolver)
                     throw new NoMatchingResolverException(contract);
                 
-                return resolver.Resolve(new ResolutionContext(this, sourceContainer));
+                if (!_currentlyResolved.Add(resolverID))
+                    throw new CircularDependencyException(resolverID);
+                
+                var value = resolver.Resolve(new ResolutionContext(this)); 
+
+                _currentlyResolved.Remove(resolverID);
+                
+                return value;
             }
             
             public async UniTask<object> ResolveAsync(Type contract, object id = null)
             {
                 var resolverID = new ResolverID(contract, id);
                 
-                var resolver = GetResolver(resolverID, out var sourceContainer);
+                var resolver = GetResolver(resolverID);
 
                 if (resolver == null)
                     throw new NoMatchingResolverException(contract);
+
+                if (!_currentlyResolved.Add(resolverID))
+                    throw new CircularDependencyException(resolverID);
                 
-                return await resolver.ResolveAsync(new ResolutionContext(this, sourceContainer));
+                var value = await resolver.ResolveAsync(new ResolutionContext(this)); 
+
+                _currentlyResolved.Remove(resolverID);
+                
+                return value;
             }
 
-            private IAsyncResolver GetResolver(ResolverID resolverId, out IReadOnlyContainer sourceContainer)
+            private IAsyncResolver GetResolver(ResolverID resolverId) 
+                => Resolvers.TryGetValue(resolverId, out var r) ? r : null;
+
+            ~Container()
             {
-                //Try resolve using a direct resolver
-                foreach (var container in SelfAndParents())
-                {
-                    if (TryGetResolver(container, out var resolver))
-                    {
-                        sourceContainer = container;
-                        return resolver;
-                    }
-                }
-
-                sourceContainer = null;
-                return null;
-
-                bool TryGetResolver(IReadOnlyContainer node, out IAsyncResolver resolver)
-                {
-                    if (node.Resolvers == null)
-                    {
-                        resolver = default;
-                        return false;
-                    }
-
-                    if (node.Resolvers.TryGetValue(resolverId, out var r))
-                    {
-                        resolver = r;
-                        return true;
-                    }
-
-                    resolver = default;
-                    return false;
-                }
-            }
-
-            private IEnumerable<IReadOnlyContainer> SelfAndParents()
-            {
-                IReadOnlyContainer current = this;
-
-                while (current != null)
-                {
-                    yield return current;
-                    current = current.Parent;
-                }
+                Dispose();
             }
         }
         

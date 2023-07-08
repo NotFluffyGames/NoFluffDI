@@ -1,5 +1,9 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using NUnit.Framework;
+using UnityEngine.TestTools;
 
 namespace NotFluffy.NoFluffDI.Tests
 {
@@ -39,6 +43,52 @@ namespace NotFluffy.NoFluffDI.Tests
                     .Container;
             }
         }
+        
+        [UnityTest]
+        public IEnumerator ResolveAsync_RecursivelyResolveAType_ThrowCircularDependencyException()
+        {
+            var container = Resolve
+                .FromMethodAsync(context => context.ResolveAsync<ITestInput>())
+                .BuildContainer("Recursively resolved container")
+                .Container;
+
+            Exception e = default;
+            yield return container.ResolveAsync<ITestInput>().ToCoroutine(_ => { }, exception => e = exception);
+            
+            Assert.IsInstanceOf<CircularDependencyException>(e);
+        }
+        
+        [UnityTest]
+        public IEnumerator ResolveAsync_TypesDependOnEachOther_ThrowCircularDependencyException()
+        {
+            var container = Resolvers()
+                .BuildContainer("Recursively resolved container")
+                .Container;
+
+            Exception e = default;
+            yield return container.ResolveAsync<string>().ToCoroutine(_ => { }, exception => e = exception);
+            
+            Assert.IsInstanceOf<CircularDependencyException>(e);
+
+            IEnumerable<IResolverFactory> Resolvers()
+            {
+                async UniTask<int> IntResolver(IResolutionContext context)
+                {
+                    await context.ResolveAsync<string>();
+                    return 5;
+                }
+
+                async UniTask<string> StringResolver(IResolutionContext context)
+                {
+                    await context.ResolveAsync<int>();
+                    return "5";
+                }
+
+                yield return Resolve.FromMethodAsync(IntResolver);
+                yield return Resolve.FromMethodAsync(StringResolver);
+            }
+        }
+        
         // [UnityTest]
         // public IEnumerator ResolveAsync_StringFromInstalledContainer_True()
         // {
