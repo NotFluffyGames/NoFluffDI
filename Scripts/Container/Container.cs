@@ -157,8 +157,7 @@ namespace NotFluffy.NoFluffDI
             {
                 if (factories == null)
                     yield break;
-
-                var toResolve = new Queue<IAsyncResolver>();
+                
                 foreach (var factory in factories)
                 {
                     var resolver = factory?.Create();
@@ -167,16 +166,6 @@ namespace NotFluffy.NoFluffDI
                         continue;
                     
                     yield return resolver;
-
-                    if (!factory.IsLazy)
-                        toResolve.Enqueue(resolver);
-                }
-
-                while (toResolve.Count > 0)
-                {
-                    var resolver = toResolve.Dequeue();
-                    var ctx = new ResolutionContext(this);
-                    resolver.ResolveAsync(ctx);
                 }
             }
             

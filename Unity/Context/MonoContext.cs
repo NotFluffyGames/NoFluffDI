@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace NotFluffy.NoFluffDI
 {
-    [DefaultExecutionOrder(-10000)]
     public abstract class MonoContext : MonoBehaviour
     {
         [SerializeField]

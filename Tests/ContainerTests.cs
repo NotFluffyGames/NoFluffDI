@@ -288,7 +288,7 @@ namespace NotFluffy.NoFluffDI.Tests
         {
             var wasResolved = false;
             using var builder = new ContainerBuilder("");
-            builder.Add(Resolve.FromMethod(GetValue).Lazy());
+            builder.Add(Resolve.FromMethod(GetValue));
 
             builder.Build();
 
@@ -306,7 +306,7 @@ namespace NotFluffy.NoFluffDI.Tests
         {
             var wasResolved = false;
             using var builder = new ContainerBuilder("");
-            builder.Add(Resolve.FromMethod(GetValue).Lazy());
+            builder.Add(Resolve.FromMethod(GetValue));
 
             Assert.False(wasResolved);
             
@@ -327,7 +327,8 @@ namespace NotFluffy.NoFluffDI.Tests
         {
             var wasResolved = false;
             using var builder = new ContainerBuilder("");
-            builder.Add(Resolve.FromMethod(GetValue).NonLazy());
+            builder.Add(Resolve.FromMethod(GetValue));
+            builder.MarkNoneLazy<int>();
 
             builder.Build();
 

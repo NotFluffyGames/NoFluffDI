@@ -72,5 +72,11 @@ namespace NotFluffy.NoFluffDI
             installable?.Invoke(builder);
             return builder;
         }
+
+        public static IContainerBuilder MarkNoneLazy<T>(this IContainerBuilder builder)
+        {
+            builder.RegisterBuildCallback(container => container.Resolve<T>());
+            return builder;
+        }
     }
 }

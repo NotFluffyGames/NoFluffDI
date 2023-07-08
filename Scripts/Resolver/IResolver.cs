@@ -33,7 +33,6 @@ namespace NotFluffy.NoFluffDI
 
     public interface IResolverFactory
     {
-	    bool IsLazy { get; }
 	    IAsyncResolver Create();
     }
 }

@@ -7,7 +7,6 @@ namespace NotFluffy.NoFluffDI
     public class ResolverFactory : IResolverFactory
     {
         private readonly Func<IResolutionContext, object> method;
-        public bool IsLazy { get; private set; } = true;
         private bool Transient;
         private readonly List<Type> types = new();
         private List<PostResolveAction> postResolveActions;
@@ -46,18 +45,7 @@ namespace NotFluffy.NoFluffDI
             Transient = true;
             return this;
         }
-
-        public ResolverFactory NonLazy()
-        {
-            IsLazy = false;
-            return this;
-        }
-
-        public ResolverFactory Lazy()
-        {
-            IsLazy = true;
-            return this;
-        }
+        
         public ResolverFactory WithID(object id)
         {
             ID = id;
