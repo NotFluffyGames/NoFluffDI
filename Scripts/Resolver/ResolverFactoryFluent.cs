@@ -9,6 +9,7 @@ namespace NotFluffy.NoFluffDI
     {
         private readonly Func<IResolutionContext, object> method;
         private bool Transient;
+        private readonly Type methodType;
         private readonly List<Type> types = new();
         protected List<PostResolveAction> postResolveActions;
         protected List<PostDisposeAction> postDisposeActions;
@@ -19,7 +20,7 @@ namespace NotFluffy.NoFluffDI
             if(type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            types.Add(type);
+            methodType = type;
 
             if(extraTypes is { Count: > 0 })
                 types.AddRange(extraTypes);
@@ -29,6 +30,9 @@ namespace NotFluffy.NoFluffDI
 
         public IAsyncResolver Create()
         {
+            if(types.Count == 0)
+                types.Add(methodType);
+            
             var ids = types.Select(t => new ResolverID(t, ID));
             return Transient
                 ? new TransientResolver(ids, method, postResolveActions, postDisposeActions)
@@ -50,6 +54,12 @@ namespace NotFluffy.NoFluffDI
         public T WithID(object id)
         {
             ID = id;
+            return (T)this;
+        }
+
+        public T As<TType>()
+        {
+            types.Add(typeof(TType));
             return (T)this;
         }
 

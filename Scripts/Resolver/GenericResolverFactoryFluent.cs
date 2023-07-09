@@ -24,7 +24,11 @@ namespace NotFluffy.NoFluffDI
 
         public IAsyncResolver Create()
         {
+            if(types.Count == 0)
+                types.Add(typeof(T));
+            
             var ids = types.Select(t => new ResolverID(t, ID));
+            
             return Transient
                 ? new TransientResolver(ids, method, postResolveActions, postDisposeActions)
                 : new SingleResolver(ids, method, postResolveActions, postDisposeActions);
@@ -48,10 +52,9 @@ namespace NotFluffy.NoFluffDI
             return (TFactory)this;
         }
 
-        public TFactory As(Type type)
+        public TFactory As<TType>()
         {
-            if(type != null)
-                types.Add(type);
+            types.Add(typeof(TType));
 
             return (TFactory)this;
         }

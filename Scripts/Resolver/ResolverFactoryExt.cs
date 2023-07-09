@@ -10,12 +10,5 @@ namespace NotFluffy.NoFluffDI
         {
             return factory.AddPostDisposeAction(obj => (obj as IDisposable)?.Dispose());
         }
-        
-        public static TFactory As<TType, T, TFactory>(this TFactory factory)
-            where TFactory : ResolverFactoryFluent<T, TFactory>
-            where T : TType
-        {
-            return factory.As(typeof(TType));
-        }
     }
 }

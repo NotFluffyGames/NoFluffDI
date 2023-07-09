@@ -1,5 +1,3 @@
-using System;
-
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedMember.Global
 
@@ -13,14 +11,6 @@ namespace NotFluffy.NoFluffDI
 
         public static ResolverFactory FromNew<TBind, T>()
             where T : TBind, new()
-            => FromMethod<TBind>(() => new T());
-
-        public static ResolverFactory FromNew<T>(params Type[] extraTypes)
-            where T : new()
-            => FromMethod(() => new T(), extraTypes);
-
-        public static ResolverFactory FromNew<TBind, T>(params Type[] extraTypes)
-            where T : TBind, new()
-            => FromMethod<TBind>(() => new T(), extraTypes);
+            => FromMethod(() => new T()).As<TBind>();
     }
 }
