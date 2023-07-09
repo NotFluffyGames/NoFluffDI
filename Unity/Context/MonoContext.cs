@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using UnityEngine;
 
 namespace NotFluffy.NoFluffDI
@@ -9,22 +8,21 @@ namespace NotFluffy.NoFluffDI
         [SerializeField]
         protected InstallersCollection installers;
 
-        private IReadOnlyContainer _container;
+        private IDisposable _containerDisposable;
 
-        private readonly CancellationTokenSource _disposeSource = new();
-
-        protected abstract void BindContext(Action<IContainerBuilder> callback);
+        protected abstract IContainerBuilder BindContext();
 
         protected virtual void Awake()
         {
-            BindContext(Callback);
+            var builder = BindContext();
+            builder.Install(installers);
+            var buildResult = builder.Build();
+            _containerDisposable = buildResult.ContainerDisposable;
+        }
 
-            void Callback(IContainerBuilder builder)
-            {
-                builder.Install(installers);
-                var buildResult = builder.Build();
-                _container = buildResult.Container;
-            }
+        private void OnDestroy()
+        {
+            _containerDisposable?.Dispose();
         }
     }
 }

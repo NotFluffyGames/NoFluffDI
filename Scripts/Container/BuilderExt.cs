@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 // ReSharper disable UnusedMember.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -75,8 +76,18 @@ namespace NotFluffy.NoFluffDI
 
         public static IContainerBuilder MarkNoneLazy<T>(this IContainerBuilder builder)
         {
-            builder.RegisterBuildCallback(container => container.Resolve<T>());
-            return builder;
+            return builder.RegisterBuildCallback(container => container.Resolve<T>());
+        }
+
+        public static IContainerBuilder MarkNoneLazyAsync<T>(this IContainerBuilder builder)
+        {
+            return builder.RegisterBuildCallback(container => container.ResolveAsync<T>().Forget());
+        }
+
+        public static IResolverFactory AddTo(this IResolverFactory resolverFactory, IContainerBuilder builder)
+        {
+            builder.Add(resolverFactory);
+            return resolverFactory;
         }
     }
 }

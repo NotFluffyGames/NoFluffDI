@@ -8,9 +8,13 @@ namespace NotFluffy.NoFluffDI
 	/// Invoked after each new instance is created
 	/// </summary>
 	public delegate UniTask AsyncPostResolveAction(object resolved, IResolutionContext context);
+	public delegate UniTask AsyncPostResolveAction<in T>(T resolved, IResolutionContext context);
+	
 	public delegate void PostDisposeAction(object disposed);
+	public delegate void PostDisposeAction<in T>(T disposed);
 	
 	public delegate void PostResolveAction(object resolved, IResolutionContext context);
+	public delegate void PostResolveAction<in T>(T resolved, IResolutionContext context);
 	
 	public interface IResolutionContext
 	{

@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace NotFluffy.NoFluffDI
@@ -7,7 +6,7 @@ namespace NotFluffy.NoFluffDI
     [DisallowMultipleComponent]
     public class SceneContext : MonoContext
     {
-        protected override void BindContext(Action<IContainerBuilder> callback)
-            => callback?.Invoke(gameObject.scene.CreateScope());
+        protected override IContainerBuilder BindContext() 
+            => gameObject.scene.CreateScope();
     }
 }

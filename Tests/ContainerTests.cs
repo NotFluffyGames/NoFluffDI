@@ -334,10 +334,10 @@ namespace NotFluffy.NoFluffDI.Tests
 
             Assert.True(wasResolved);
 
-            UniTask<int> GetValue()
+            int GetValue()
             {
                 wasResolved = true;
-                return new UniTask<int>(5);
+                return 5;
             }
         }
 

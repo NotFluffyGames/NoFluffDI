@@ -38,6 +38,5 @@ namespace NotFluffy.NoFluffDI
 
         public static UniTask<T> ResolveAsync<T>(this IResolutionContext ctx, object id = null) 
             => ctx.Container.ResolveAsync<T>(id);
-
     }
 }
