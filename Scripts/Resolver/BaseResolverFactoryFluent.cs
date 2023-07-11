@@ -100,16 +100,18 @@ namespace NotFluffy.NoFluffDI
 
         protected IEnumerable<OnDisposeAction> GetOnDisposeActions()
         {
-            foreach (var onDisposeAction in onDisposeActions)
-                if (onDisposeAction != null)
-                    yield return disposed => onDisposeAction((T)disposed);
+            if(onDisposeActions != null)
+                foreach (var onDisposeAction in onDisposeActions)
+                    if (onDisposeAction != null)
+                        yield return disposed => onDisposeAction((T)disposed);
         }
 
         protected IEnumerable<PostResolveAction> GetPostResolveActions()
         {
-            foreach (var postResolveAction in postResolveActions)
-                if(postResolveAction != null)
-                    yield return (resolved, context) => postResolveAction.Invoke((T)resolved, context);
+            if(postResolveActions != null)
+                foreach (var postResolveAction in postResolveActions)
+                    if(postResolveAction != null)
+                        yield return (resolved, context) => postResolveAction.Invoke((T)resolved, context);
         }
 
     }

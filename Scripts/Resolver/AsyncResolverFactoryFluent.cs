@@ -46,10 +46,11 @@ namespace NotFluffy.NoFluffDI
 
         private IEnumerable<AsyncPostResolveAction> GetAsyncPostResolveActions()
         {
-            foreach (var postResolveAction in postResolveActions)
-                if (postResolveAction != null)
-                    yield return (resolved, context) => postResolveAction((T)resolved, context);
-
+            if(postResolveActions != null)
+                foreach (var postResolveAction in postResolveActions)
+                    if (postResolveAction != null)
+                        yield return (resolved, context) => postResolveAction((T)resolved, context);
+            
             foreach (var postResolveAction in base.GetPostResolveActions())
                 if (postResolveAction != null)
                 {

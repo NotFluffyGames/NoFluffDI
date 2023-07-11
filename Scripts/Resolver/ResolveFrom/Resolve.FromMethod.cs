@@ -26,7 +26,7 @@ namespace NotFluffy.NoFluffDI
         {
             return new AsyncResolverFactory<T>(Method);
 
-            async UniTask<object> Method(IResolutionContext _) => await method();
+            async UniTask<T> Method(IResolutionContext _) => await method();
         }
     }
 }
