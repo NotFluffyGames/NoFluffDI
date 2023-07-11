@@ -3,11 +3,6 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using NotFluffy.NoFluffRx;
 
-// ReSharper disable UnusedMethodReturnValue.Global
-// ReSharper disable UnusedMember.Global
-// ReSharper disable UnusedType.Global
-// ReSharper disable MemberCanBePrivate.Global
-
 namespace NotFluffy.NoFluffDI
 {
 

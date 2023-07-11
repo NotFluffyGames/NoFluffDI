@@ -8,12 +8,12 @@ namespace NotFluffy.NoFluffDI
     public class AsyncTransientResolver : BaseTransientResolver
     {
         private readonly IReadOnlyList<AsyncPostResolveAction> postResolveActions;
-        private readonly Func<IResolutionContext, UniTask<object>> method;
+        private readonly AsyncResolveMethod method;
         
 
         public AsyncTransientResolver(
             IEnumerable<ResolverID> IDs, 
-            Func<IResolutionContext, UniTask<object>> method, 
+            AsyncResolveMethod method, 
             IEnumerable<AsyncPostResolveAction> postResolveActions,
             IEnumerable<PostDisposeAction> postDisposeActions)
             : base(IDs, postDisposeActions)

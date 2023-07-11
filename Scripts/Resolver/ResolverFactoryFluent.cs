@@ -4,81 +4,76 @@ using System.Linq;
 
 namespace NotFluffy.NoFluffDI
 {
-    public abstract class ResolverFactoryFluent<T> : IResolverFactory
-        where T : ResolverFactoryFluent<T>
+    public abstract class ResolverFactoryFluent<T, TFactory> :  IResolverFactory
+        where TFactory : ResolverFactoryFluent<T, TFactory>
     {
-        private readonly Func<IResolutionContext, object> method;
+        private readonly ResolveMethod<T> method;
         private bool Transient;
-        private readonly Type methodType;
         private readonly List<Type> types = new();
-        protected List<PostResolveAction> postResolveActions;
-        protected List<PostDisposeAction> postDisposeActions;
+        private List<PostResolveAction> postResolveActions;
+        private List<PostDisposeAction> postDisposeActions;
         private object ID { get; set; }
 
-        public ResolverFactoryFluent(Type type, Func<IResolutionContext, object> method, IReadOnlyCollection<Type> extraTypes)
+        public ResolverFactoryFluent(ResolveMethod<T> method)
         {
-            if(type == null)
-                throw new ArgumentNullException(nameof(type));
-
-            methodType = type;
-
-            if(extraTypes is { Count: > 0 })
-                types.AddRange(extraTypes);
-
             this.method = method ?? throw new ArgumentNullException(nameof(method));
         }
 
         public IAsyncResolver Create()
         {
             if(types.Count == 0)
-                types.Add(methodType);
+                types.Add(typeof(T));
             
             var ids = types.Select(t => new ResolverID(t, ID));
+
             return Transient
-                ? new TransientResolver(ids, method, postResolveActions, postDisposeActions)
-                : new SingleResolver(ids, method, postResolveActions, postDisposeActions);
+                ? new TransientResolver(ids, ResolveMethod, postResolveActions, postDisposeActions)
+                : new SingleResolver(ids, ResolveMethod, postResolveActions, postDisposeActions);
+            
+            object ResolveMethod(IResolutionContext ctx) => method(ctx);
         }
 
-        public T AsSingle()
+        public TFactory AsSingle()
         {
             Transient = false;
-            return (T)this;
+            return (TFactory)this;
         }
 
-        public T AsTransient()
+        public TFactory AsTransient()
         {
             Transient = true;
-            return (T)this;
+            return (TFactory)this;
         }
         
-        public T WithID(object id)
+        public TFactory WithID(object id)
         {
             ID = id;
-            return (T)this;
+            return (TFactory)this;
         }
 
-        public T As<TType>()
+        public TFactory As<TType>()
         {
             types.Add(typeof(TType));
-            return (T)this;
+
+            return (TFactory)this;
         }
 
         /// <summary>
         /// Invoked after each new instance is created
         /// </summary>
-        public T AddPostResolveAction(PostResolveAction action)
+        public TFactory AddPostResolveAction(PostResolveAction<T> action)
         {
             postResolveActions ??= new List<PostResolveAction>(1);
-            postResolveActions.Add(action);
+            postResolveActions.Add((r, c) => action((T)r,c));
 
-            return (T)this;
+            return (TFactory)this;
         }
         
-        public T AddPostDisposeAction(PostDisposeAction action)
+        public TFactory AddPostDisposeAction(PostDisposeAction<T> action)
         {
             postDisposeActions ??= new List<PostDisposeAction>(1);
-            postDisposeActions.Add(action);
-            return (T)this;
+            postDisposeActions.Add(d => action((T)d));
+            return (TFactory)this;
         }
     }
 }

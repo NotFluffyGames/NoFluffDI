@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace NotFluffy.NoFluffDI
@@ -7,7 +6,7 @@ namespace NotFluffy.NoFluffDI
     {
         public SingleResolver(
             IEnumerable<ResolverID> ids, 
-            Func<IResolutionContext, object> method, 
+            ResolveMethod method, 
             IEnumerable<PostResolveAction> postResolveActions,
             IEnumerable<PostDisposeAction> postDisposeActions)
             : base(ids, method, postResolveActions, postDisposeActions)

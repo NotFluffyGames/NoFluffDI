@@ -105,7 +105,7 @@ namespace NotFluffy.NoFluffDI
                 return false;
             }
 
-            private IEnumerable<IAsyncResolver> BuildResolvers(IEnumerable<IResolverFactory> factories)
+            private static IEnumerable<IAsyncResolver> BuildResolvers(IEnumerable<IResolverFactory> factories)
             {
                 if (factories == null)
                     yield break;

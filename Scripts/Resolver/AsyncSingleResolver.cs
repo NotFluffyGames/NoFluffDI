@@ -8,7 +8,7 @@ namespace NotFluffy.NoFluffDI
     {
         public AsyncSingleResolver(
             IEnumerable<ResolverID> ids, 
-            Func<IResolutionContext, UniTask<object>> method, 
+            AsyncResolveMethod method, 
             IEnumerable<AsyncPostResolveAction> postResolveActions, 
             IEnumerable<PostDisposeAction> postDisposeActions)
             : base(ids, method, postResolveActions, postDisposeActions)

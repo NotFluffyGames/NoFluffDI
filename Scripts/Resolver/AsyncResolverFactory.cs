@@ -1,84 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Cysharp.Threading.Tasks;
-// ReSharper disable UnusedMember.Global
-
-namespace NotFluffy.NoFluffDI
+﻿namespace NotFluffy.NoFluffDI
 {
-    public class AsyncResolverFactory : IResolverFactory
+    public class AsyncResolverFactory<T> : AsyncResolverFactoryFluent<T, AsyncResolverFactory<T>>
     {
-        private readonly Func<IResolutionContext, UniTask<object>> method;
-        public bool IsLazy { get; private set; } = true;
-        private bool Transient;
-        private readonly List<Type> types = new();
-        private List<AsyncPostResolveAction> postResolveActions;
-        private List<PostDisposeAction> postDisposeActions;
-        private object ID { get; set; }
-
-        public AsyncResolverFactory(Type type, Func<IResolutionContext, UniTask<object>> method, IReadOnlyCollection<Type> extraTypes)
+        public AsyncResolverFactory(AsyncResolveMethod<T> method) 
+            : base(method)
         {
-            if(type == null)
-                throw new ArgumentNullException(nameof(type));
-
-            types.Add(type);
-
-            if(extraTypes is { Count: > 0 })
-                types.AddRange(extraTypes);
-
-            this.method = method ?? throw new ArgumentNullException(nameof(method));
-        }
-
-        public IAsyncResolver Create()
-        {
-            var ids = types.Select(t => new ResolverID(t, ID));
-            return Transient
-                ? new AsyncTransientResolver(ids, method, postResolveActions, postDisposeActions)
-                : new AsyncSingleResolver(ids, method, postResolveActions, postDisposeActions);
-        }
-
-        public AsyncResolverFactory AsSingle()
-        {
-            Transient = false;
-            return this;
-        }
-
-        public AsyncResolverFactory AsTransient()
-        {
-            Transient = true;
-            return this;
-        }
-
-        public AsyncResolverFactory NonLazy()
-        {
-            IsLazy = false;
-            return this;
-        }
-
-        public AsyncResolverFactory Lazy()
-        {
-            IsLazy = true;
-            return this;
-        }
-        public AsyncResolverFactory WithID(object id)
-        {
-            ID = id;
-            return this;
-        }
-
-        /// <summary>
-        /// Invoked after each new instance is created
-        /// </summary>
-        public AsyncResolverFactory AddPostResolveAction(AsyncPostResolveAction action)
-        {
-            postResolveActions ??= new List<AsyncPostResolveAction>(1) { action };
-            return this;
-        }
-
-        public AsyncResolverFactory AddPostDisposeAction(PostDisposeAction action)
-        {
-            postDisposeActions ??= new List<PostDisposeAction>(1) { action };
-            return this;
         }
     }
 }

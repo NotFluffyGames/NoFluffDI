@@ -7,12 +7,12 @@ namespace NotFluffy.NoFluffDI
 {
     public class TransientResolver : BaseTransientResolver, IResolver
     {
-        private readonly Func<IResolutionContext, object> method;
+        private readonly ResolveMethod method;
         private readonly IReadOnlyList<PostResolveAction> postResolveActions;
 
         public TransientResolver(
             IEnumerable<ResolverID> IDs, 
-            Func<IResolutionContext, object> method, 
+            ResolveMethod method, 
             IEnumerable<PostResolveAction> postResolveActions,
             IEnumerable<PostDisposeAction> postDisposeActions)
             : base(IDs, postDisposeActions)
