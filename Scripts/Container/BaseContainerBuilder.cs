@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 namespace NotFluffy.NoFluffDI
 {
@@ -10,8 +11,9 @@ namespace NotFluffy.NoFluffDI
         protected List<IResolverFactory> resolverFactories;
         protected object Context { get; }
         protected IReadOnlyContainer Parent { get; }
-        protected event Action<IReadOnlyContainer> BuildCallback;
         protected List<Inject> injectables;
+        private event BuildCallback BuildCallback;
+        private event InjectCallback InjectCallback;
 
         protected BaseContainerBuilder(object context = null, IReadOnlyContainer parent = null)
         {
@@ -43,17 +45,29 @@ namespace NotFluffy.NoFluffDI
         {
             AssertNotDisposed();
             
-            var container = Create(); 
+            var result = Create();
+            var container = result.Container;
             
-            BuildCallback?.Invoke(container.Container);
-            BuildCallback = null;
+            BuildCallback?.Invoke(container);
+            var injectCallback = InjectCallback;
+
+            _ = new InjectContext(container)
+                .Inject(injectables)
+                .ContinueWith(InjectionComplete);
             
-            return container;
+            Dispose();
+
+            return result;
+
+            void InjectionComplete()
+            {
+                injectCallback?.Invoke(container);
+            }
         }
 
         protected abstract IContainerBuildResult Create();
 
-        public IContainerBuilder RegisterBuildCallback(Action<IReadOnlyContainer> callback)
+        public IContainerBuilder RegisterBuildCallback(BuildCallback callback)
         {
             AssertNotDisposed();
             
@@ -62,7 +76,14 @@ namespace NotFluffy.NoFluffDI
             return this;
         }
 
-        public abstract IContainerBuilder RegisterInjectCallback(Action<IReadOnlyContainer> callback);
+        public IContainerBuilder RegisterInjectCallback(InjectCallback callback)
+        {
+            AssertNotDisposed();
+            
+            InjectCallback += callback;
+
+            return this;
+        }
 
         public virtual void Dispose()
         {
@@ -73,9 +94,9 @@ namespace NotFluffy.NoFluffDI
             
             resolverFactories = null;
             BuildCallback = null;
+            InjectCallback = null;
             injectables = null;
         }
-        
         protected void AssertNotDisposed()
         {
             if(_disposed)

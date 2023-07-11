@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reactive;
 using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Cysharp.Threading.Tasks;
 using NotFluffy.NoFluffRx;
@@ -11,8 +10,6 @@ namespace NotFluffy.NoFluffDI
 {
     public class ContainerBuilder : BaseContainerBuilder
     {
-        private event Action<IReadOnlyContainer> _onInjectionComplete;
-        
         public ContainerBuilder(object context = null, IReadOnlyContainer parent = null)
             : base(context, parent)
         {
@@ -21,55 +18,14 @@ namespace NotFluffy.NoFluffDI
         protected override IContainerBuildResult Create()
         {
             AssertNotDisposed();
-                
-            var injectionCompletionSource = new UniTaskCompletionSource();
 
             var container = new Container(
                 Context,
                 Parent,
-                resolverFactories,
-                () => injectionCompletionSource.Task);
-
-            var injectContext = new InjectContext(container);
-            
-            if(injectables is { Count: > 0 })
-                _ = UniTask.WhenAll(injectables.SelectWhile<Inject, UniTask>(TryInject)).ContinueWith(OnComplete);
-            else
-                OnComplete();
+                resolverFactories);
 
             return new ContainerBuildResult(container, container);
-
-            bool TryInject(Inject inject, out UniTask task)
-            {
-                if (inject == null)
-                {
-                    task = default;
-                    return false;
-                }
-
-                task = inject(injectContext);
-                return true;
-            }
-
-            void OnComplete()
-            {
-                injectionCompletionSource.TrySetResult();
-                
-                injectContext.InjectionComplete();
-                
-                _onInjectionComplete?.Invoke(container);
-            }
         }
-
-        public override IContainerBuilder RegisterInjectCallback(Action<IReadOnlyContainer> callback)
-        {
-            AssertNotDisposed();
-            
-            _onInjectionComplete += callback;
-
-            return this;
-        }
-
 
         private class Container : IReadOnlyContainer, IReactiveDisposable
         {
@@ -80,8 +36,6 @@ namespace NotFluffy.NoFluffDI
             private bool disposed;
 
             private readonly HashSet<ResolverID> _currentlyResolved = new();
-            private readonly Func<UniTask> injectionTaskSource;
-            public UniTask InjectionTask => injectionTaskSource();
 
             private readonly Subject<Unit> onDispose = new();
             public IObservable<Unit> OnDispose => onDispose;
@@ -89,12 +43,10 @@ namespace NotFluffy.NoFluffDI
             public Container(
                 object context,
                 IReadOnlyContainer parent,
-                IEnumerable<IResolverFactory> factories,
-                Func<UniTask> injectionTask)
+                IEnumerable<IResolverFactory> factories)
             {
                 Context = context;
-                injectionTaskSource = injectionTask;
-                
+
                 var resolversDict = parent == null 
                     ? new Dictionary<ResolverID, IAsyncResolver>()
                     : new Dictionary<ResolverID, IAsyncResolver>(parent.Resolvers);
@@ -213,29 +165,6 @@ namespace NotFluffy.NoFluffDI
             ~Container()
             {
                 Dispose();
-            }
-        }
-        
-        private class InjectContext : IInjectContext
-        {
-            public IReadOnlyContainer Container { get; }
-
-            private event Action OnComplete;
-
-            internal void InjectionComplete()
-            {
-                OnComplete?.Invoke();
-                OnComplete = null;
-            }
-        
-            public void RegisterInjectCallback(Action callback)
-            {
-                OnComplete += callback;
-            }
-
-            public InjectContext(IReadOnlyContainer container)
-            {
-                Container = container;
             }
         }
     }

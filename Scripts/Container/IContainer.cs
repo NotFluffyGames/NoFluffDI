@@ -11,6 +11,8 @@ using NotFluffy.NoFluffRx;
 namespace NotFluffy.NoFluffDI
 {
 
+    public delegate void BuildCallback(IReadOnlyContainer container);
+    public delegate void InjectCallback(IReadOnlyContainer container);
     public delegate UniTask Inject(IInjectContext context);
 
     public interface IContainerBuildResult
@@ -31,9 +33,9 @@ namespace NotFluffy.NoFluffDI
 
         IContainerBuildResult Build();
         
-        IContainerBuilder RegisterBuildCallback(Action<IReadOnlyContainer> container);
         
-        IContainerBuilder RegisterInjectCallback(Action<IReadOnlyContainer> container);
+        IContainerBuilder RegisterInjectCallback(InjectCallback container);
+        IContainerBuilder RegisterBuildCallback(BuildCallback container);
     }
     
     public interface IReadOnlyContainer : IReadOnlyReactiveDisposable
@@ -71,10 +73,5 @@ namespace NotFluffy.NoFluffDI
         /// </summary>
         /// <returns>Whether the type can resolved</returns>
         bool Contains(Type contract, object id = null);
-        
-        /// <summary>
-        /// Finishes when all injections declared in the ContainerBuilder complete injection
-        /// </summary>
-        UniTask InjectionTask { get; }
     }
 }
