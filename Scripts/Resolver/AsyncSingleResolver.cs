@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
@@ -10,7 +9,7 @@ namespace NotFluffy.NoFluffDI
             IEnumerable<ResolverID> ids, 
             AsyncResolveMethod method, 
             IEnumerable<AsyncPostResolveAction> postResolveActions, 
-            IEnumerable<PostDisposeAction> postDisposeActions)
+            IEnumerable<OnDisposeAction> postDisposeActions)
             : base(ids, method, postResolveActions, postDisposeActions)
         {
         }

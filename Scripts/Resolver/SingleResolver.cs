@@ -8,7 +8,7 @@ namespace NotFluffy.NoFluffDI
             IEnumerable<ResolverID> ids, 
             ResolveMethod method, 
             IEnumerable<PostResolveAction> postResolveActions,
-            IEnumerable<PostDisposeAction> postDisposeActions)
+            IEnumerable<OnDisposeAction> postDisposeActions)
             : base(ids, method, postResolveActions, postDisposeActions)
         {
         }

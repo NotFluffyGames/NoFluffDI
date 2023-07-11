@@ -14,7 +14,7 @@ namespace NotFluffy.NoFluffDI
             IEnumerable<ResolverID> IDs, 
             ResolveMethod method, 
             IEnumerable<PostResolveAction> postResolveActions,
-            IEnumerable<PostDisposeAction> postDisposeActions)
+            IEnumerable<OnDisposeAction> postDisposeActions)
             : base(IDs, postDisposeActions)
         {
             this.method = method ?? throw new ArgumentNullException(nameof(method));

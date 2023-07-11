@@ -8,7 +8,7 @@ namespace NotFluffy.NoFluffDI
 {
     public abstract class BaseTransientResolver : IAsyncResolver
     {
-        private readonly IReadOnlyList<PostDisposeAction> postDisposeActions;
+        private readonly IReadOnlyList<OnDisposeAction> postDisposeActions;
         private readonly bool hasPostDisposeActions;
 
         public IReadOnlyList<ResolverID> IDs { get; }
@@ -22,7 +22,7 @@ namespace NotFluffy.NoFluffDI
 
         protected BaseTransientResolver(
             IEnumerable<ResolverID> IDs,
-            IEnumerable<PostDisposeAction> postDisposeActions)
+            IEnumerable<OnDisposeAction> postDisposeActions)
         {
             Resolutions = 0;
             this.IDs = IDs.ToArray();
